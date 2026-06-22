@@ -81,11 +81,18 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(corsMiddleware)
-	r.Use(projectMiddleware)
 
 	r.Post("/register", handlers.RegisterHandler)
 	r.Post("/login", handlers.LoginHandler)
-	r.Get("/projects", projects.GetProjectsHandler)
+
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.Logger)
+		r.Use(corsMiddleware)
+		r.Use(projectMiddleware)
+
+		r.Get("/projects", projects.GetProjectsHandler)
+		r.Post("/project", projects.CreateProjectHandler)
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {

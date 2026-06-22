@@ -3,6 +3,7 @@ package projects
 import (
 	"Stratum/internal/database"
 	"database/sql"
+	"fmt"
 
 	"encoding/json"
 	"net/http"
@@ -68,14 +69,17 @@ func GetProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
 		return
 	}
+	fmt.Println("User ID:", userid)
 
 	rows, err := database.DB.Query(
 		`SELECT id, title FROM projects WHERE userid = $1`,
 		userid,
 	)
+
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "internal server error"})
+		fmt.Println(err)
 		return
 	}
 	defer rows.Close()

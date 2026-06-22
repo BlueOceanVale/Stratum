@@ -4,7 +4,7 @@
     id: number,
     title: string,
   }
-  let projects: Project[] = [];
+  let projects = $state<Project[]>([]);
 
   async function getProjects() {
     const token = localStorage.getItem("token");
@@ -16,11 +16,10 @@
         "Authorization": `Bearer ${token}`
       }
     });
-
     const data = await response.json();
+
     projects = data;
   }
-
   onMount(() => {
     getProjects();
   });
