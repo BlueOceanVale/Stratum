@@ -38,14 +38,28 @@
   const close = () => (show = false);
 
   async function create(event: CustomEvent<{ title: string }>) {
-    const p = await (await fetch("localhost:8080/project", {
-      method: "POST",
-      body: JSON.stringify(event.detail),
-      headers: { "Content-Type": "application/json" }
-    })).json();
-    projects = [p, ...projects];
-    show = false;
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  const response = await fetch("http://localhost:8080/project", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(event.detail)
+  });
+
+  if (!response.ok) {
+    console.error("Failed to create project");
+    return;
   }
+
+  const p = await response.json();
+
+  projects = [p, ...projects];
+  show = false;
+}
 </script>
 
 <div class="flex items-center flex-row p-4 mb-2">
