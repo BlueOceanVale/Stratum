@@ -1,7 +1,7 @@
 <script lang="ts">
 
-    let email="";
-    let password="";
+    let email = $state("");
+    let password = $state("");
 
     async function register() {
         const response = await fetch("http://localhost:8080/register", {

@@ -1,6 +1,6 @@
 <script lang="ts">
-    let email = "";
-    let password = "";
+    let email = $state("");
+    let password = $state("");
 
     async function login() {
         const response = await fetch("http://localhost:8080/login", {
@@ -49,7 +49,7 @@
 
 <button
 	class="border rounded px-4 py-2 ml-2 mt-2"
-	on:click={login}
+	onclick={login}
 >
 	Login
 </button>

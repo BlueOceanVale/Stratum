@@ -92,6 +92,8 @@ func main() {
 
 		r.Get("/projects", projects.GetProjectsHandler)
 		r.Post("/project", projects.CreateProjectHandler)
+		r.Put("/projects/{id}", projects.UpdateProjectHandler)
+		r.Delete("/projects/{id}", projects.DeleteProjectHandler)
 	})
 
 	port := os.Getenv("PORT")
