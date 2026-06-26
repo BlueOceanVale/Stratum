@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import Modal from "$lib/Modal.svelte";
   import Pop from "$lib/Pop.svelte";
+  import { API } from "$lib/api";
 
 
   type Project = {
@@ -34,7 +35,7 @@
     if (!token) return;
 
     const res = await fetch(
-        `http://localhost:8080/projects/${selectedProject.id}`,
+        `${API}/projects/${selectedProject.id}`,
         {
             method: "DELETE",
             headers: {
@@ -64,7 +65,7 @@
 
     const projectId = selectedProject.id;
     const response = await fetch(
-      `http://localhost:8080/projects/${projectId}`,
+      `${API}/projects/${projectId}`,
       {
         method: "PUT",
         headers: {
@@ -94,7 +95,7 @@
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    const response = await fetch("http://localhost:8080/projects", {
+    const response = await fetch(`${API}/projects`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -121,7 +122,7 @@
   const token = localStorage.getItem("token");
   if (!token) return;
 
-  const response = await fetch("http://localhost:8080/project", {
+  const response = await fetch(`${API}/project`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

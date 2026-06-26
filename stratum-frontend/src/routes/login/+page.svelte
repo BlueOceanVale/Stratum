@@ -1,9 +1,11 @@
 <script lang="ts">
+    import { API } from "$lib/api";
+
     let email = $state("");
     let password = $state("");
 
     async function login() {
-        const response = await fetch("http://localhost:8080/login", {
+        const response = await fetch(`${API}/login`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
