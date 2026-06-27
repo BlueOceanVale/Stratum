@@ -3,55 +3,88 @@
 
     let email = $state("");
     let password = $state("");
+    let errorMessage = $state(""); // State to show errors to the user
 
-    async function login() {
-        const response = await fetch(`${API}/login`, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                email,
-                password,
-            })
+    async function login(event: SubmitEvent) {
+        event.preventDefault();
+        errorMessage = ""; // Clear previous errors
 
-        });
-        
-        const resp = await response.json();
-        if (!response.ok) {
-            console.log("Login failed");
-            return;
+        try {
+            const response = await fetch(`${API}/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+            
+            const resp = await response.json();
+            
+            if (!response.ok) {
+                errorMessage = resp.message || "Invalid email or password.";
+                console.log("Login failed");
+                return;
+            }
+
+            // Check if token actually exists in response
+            if (resp.token) {
+                localStorage.setItem("token", resp.token);
+                window.location.href = "/dashboard";
+            } else {
+                errorMessage = "Authentication failed. No token received.";
+            }
+
+        } catch (error) {
+            console.error("Error during login:", error);
+            errorMessage = "Something went wrong. Please try again later.";
         }
-        localStorage.setItem("token", resp.token);
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-            window.location.href = "/login";
-        }
-
-        window.location.href = "/dashboard";
     }
 </script>
 
-<h1 class="text-3xl font-bold mb-4 p-2">Stratum Login</h1>
+<div class="min-h-screen bg-slate-50 flex flex-col justify-center items-center px-4">
+  <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100">
+    
+    <div class="text-center mb-8">
+      <h2 class="text-3xl font-bold text-slate-800 tracking-tight">Sign in</h2>
+      <p class="text-slate-500 mt-2 text-sm">Please enter your details to sign in.</p>
+    </div>
 
-<hr class="border-gray-400 mt-5 mb-5"> 
+    {#if errorMessage}
+      <div class="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 font-medium">
+        {errorMessage}
+      </div>
+    {/if}
 
-<input
-	class="border-1 border-gray-400 rounded p-2 w-full mb-3 ml-2"
-	type="email"
-	placeholder="Email"
-	bind:value={email}
-/>
+    <form onsubmit={login} class="space-y-5">
+      <div>
+        <label for="login-email" class="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
+        <input 
+          id="login-email"
+          type="email" 
+          placeholder="you@example.com" 
+          bind:value={email}
+          required
+          class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+        />
+      </div>
+      
+      <div>
+        <label for="login-password" class="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+        <input 
+          id="login-password"
+          type="password" 
+          placeholder="••••••••" 
+          bind:value={password}
+          required
+          class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+        />
+      </div>
 
-<input
-	class="border-1 border-gray-400 rounded p-2 w-full mb-3 ml-2 "
-	type="password"
-	placeholder="Password"
-	bind:value={password}
-/>
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all duration-200 mt-2">
+        Sign In
+      </button>
+    </form>
 
-<button
-	class="border rounded px-4 py-2 ml-2 mt-2"
-	onclick={login}
->
-	Login
-</button>
+    <p class="text-center text-sm text-slate-600 mt-6">
+      Don't have an account? <a href="/register" class="text-blue-600 hover:underline font-medium">Sign up</a>
+    </p>
+  </div>
+</div>
