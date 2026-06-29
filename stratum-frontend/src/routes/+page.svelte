@@ -1,5 +1,5 @@
 <script>
-	// Importing your asset
+	// Importing assets
 	import hej from '$lib/assets/hej.jpg';
     import stratum from '$lib/assets/stratum.png';
 </script>
@@ -22,11 +22,11 @@
 			</div>
 			<div class="flex items-center gap-5 font-sans">
     <button class="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-white transition bg-transparent border-none p-0 cursor-pointer">
-        Sign In
+        <a href="/login">Sign In</a>
     </button>
 
     <button class="bg-[#158539] text-black text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded hover:bg-[#00E05B] transition shadow-lg shadow-[#00FF66]/5">
-        Sign Up
+        <a href="/register">Sign Up</a>
     </button>
 </div>
 		</div>
@@ -47,7 +47,7 @@
 			</p>
 			<div class="pt-2 flex items-center gap-4 text-xs font-bold uppercase">
 				<button class="bg-[#158539] text-black px-6 py-3 rounded hover:bg-[#00E05B] transition shadow-lg shadow-[#00FF66]/10">
-					Get Started Free
+					<a href="/register">Get Started Free</a>
 				</button>
 				<button class="bg-black/40 text-white border border-white/10 px-6 py-3 rounded hover:bg-black/60 transition backdrop-blur-sm">
 					View Specs
