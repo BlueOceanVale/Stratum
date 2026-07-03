@@ -33,6 +33,7 @@
 		{ n: '04', label: 'Collaborate' },
 		{ n: '05', label: 'Ship' }
 	];
+
 </script>
 
 <svelte:head>
@@ -40,41 +41,60 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="true" />
 	<link
-		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+		href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
 		rel="stylesheet"
 	/>
 </svelte:head>
 
 <style>
 	.font-display {
-		font-family: 'Inter', system-ui, sans-serif;
+		font-family: 'Space Grotesk', system-ui, sans-serif;
 	}
 	.font-mono {
-		font-family: 'IBM Plex Mono', ui-monospace, monospace;
+		font-family: 'JetBrains Mono', ui-monospace, monospace;
 	}
 	.noise {
 		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 	}
+	.scanlines {
+		background: repeating-linear-gradient(
+			to bottom,
+			rgba(255, 255, 255, 0.018) 0px,
+			rgba(255, 255, 255, 0.018) 1px,
+			transparent 1px,
+			transparent 3px
+		);
+	}
+	
+
+	@media (prefers-reduced-motion: reduce) {
+		* {
+			animation-duration: 0.001ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.001ms !important;
+		}
+	}
 </style>
 
-<div class="font-display relative min-h-screen overflow-hidden bg-black text-white antialiased selection:bg-[#376996] selection:text-white">
+<div class="font-display relative min-h-screen overflow-hidden bg-[#08090b] text-[#eef2f6] antialiased selection:bg-[#3fa9f5] selection:text-white">
 
-	<!-- Grain -->
-	<div class="noise pointer-events-none fixed inset-0 z-30 opacity-[0.035] mix-blend-overlay"></div>
+	<!-- Scanlines + grain -->
+	<div class="scanlines pointer-events-none fixed inset-0 z-40 opacity-50 mix-blend-overlay"></div>
+	<div class="noise pointer-events-none fixed inset-0 z-40 opacity-[0.035] mix-blend-overlay"></div>
 
 	<!-- Ambient gradient field -->
 	<div class="pointer-events-none fixed inset-0">
-		<div class="absolute left-1/2 top-[-14%] h-[760px] w-[1200px] -translate-x-1/2 rounded-full bg-[#376996] opacity-[0.18] blur-[190px]"></div>
-		<div class="absolute bottom-[8%] right-[-8%] h-[420px] w-[420px] rounded-full bg-[#376996] opacity-[0.10] blur-[150px]"></div>
-		<div class="absolute left-[-8%] top-[55%] h-[380px] w-[380px] rounded-full bg-[#376996] opacity-[0.08] blur-[140px]"></div>
+		<div class="absolute left-1/2 top-[-14%] h-[760px] w-[1200px] -translate-x-1/2 rounded-full bg-[#3fa9f5] opacity-[0.14] blur-[190px]"></div>
+		<div class="absolute bottom-[6%] right-[-8%] h-[420px] w-[420px] rounded-full bg-[#ff3366] opacity-[0.08] blur-[150px]"></div>
+		<div class="absolute left-[-8%] top-[55%] h-[380px] w-[380px] rounded-full bg-[#3fa9f5] opacity-[0.07] blur-[140px]"></div>
 	</div>
 
 	<!-- Navbar -->
-	<nav class="sticky top-0 z-20 border-b border-white/[0.08] bg-black/50 backdrop-blur-xl">
-		<div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+	<nav class="sticky top-0 z-30 border-b border-white/[0.09] bg-[#08090b]/55 backdrop-blur-xl">
+		<div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-[18px]">
 
 			<div class="flex items-center gap-2.5">
-				<img src="/lib/logo.png" alt="Stratum" class="h-6 w-6" />
+				<img src="{logo}" alt="Stratum" class="h-5 w-5" />
 				<span class="text-[15px] font-semibold tracking-tight">Stratum</span>
 			</div>
 
@@ -85,7 +105,7 @@
 
 				<a
 					href="/register"
-					class="rounded-full bg-gradient-to-b from-[#4A7DAD] to-[#2C5478] px-4 py-2 text-sm font-medium text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_16px_-4px_rgba(55,105,150,0.6)] transition hover:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_6px_24px_-4px_rgba(55,105,150,0.9)]">
+					class="rounded-full bg-gradient-to-b from-[#4fb3f7] to-[#1c6ba3] px-5 py-2.5 text-sm font-medium text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_18px_-4px_rgba(63,169,245,0.6)] transition hover:shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_6px_26px_-4px_rgba(63,169,245,1)]">
 					Join
 				</a>
 			</div>
@@ -94,25 +114,29 @@
 	</nav>
 
 	<!-- Hero -->
-	<section class="relative mx-auto flex max-w-6xl flex-col items-center px-6 pb-20 pt-24 text-center sm:pt-32">
+	<section class="relative mx-auto flex max-w-6xl flex-col items-center px-6 pb-20 pt-24 text-center sm:pt-28">
 
 		<a
 			href="#how-it-works"
-			class="font-mono group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-[11px] uppercase tracking-[0.12em] text-white/60 transition hover:border-[#376996]/50 hover:text-white">
+			class="font-mono group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-[11px] uppercase tracking-[0.14em] text-white/60 transition hover:border-[#3fa9f5]/50 hover:text-white">
 			<span class="relative flex h-1.5 w-1.5">
-				<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#5B93C4] opacity-60"></span>
-				<span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#5B93C4]"></span>
+				<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#5db9f7] opacity-60"></span>
+				<span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#5db9f7]"></span>
 			</span>
 			Now in early access
 		</a>
 
-		<h1 class="mt-8 max-w-3xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl">
+		<h1 class="mt-8 max-w-3xl text-5xl font-semibold leading-[1.04] tracking-tight sm:text-7xl">
 			<span class="bg-gradient-to-b from-white to-white/70 bg-clip-text text-transparent">
 				Build software without
 			</span>
 			<br />
-			<span class="bg-gradient-to-r from-[#9BC0E4] via-[#5B93C4] to-[#2C5478] bg-clip-text text-transparent">
+			<span
+				class="relative inline-block cursor-default bg-gradient-to-r from-[#9bd4fb] via-[#5db9f7] to-[#1c6ba3] bg-clip-text text-transparent"
+				role="presentation">
 				losing context.
+				<!--<span class="glitch-layer c1">losing context.</span>
+				<span class="glitch-layer c2">losing context.</span>-->
 			</span>
 		</h1>
 
@@ -125,7 +149,7 @@
 
 			<a
 				href="/register"
-				class="rounded-full bg-gradient-to-b from-[#4A7DAD] to-[#2C5478] px-7 py-3.5 text-sm font-medium text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_30px_-6px_rgba(55,105,150,0.7)] transition hover:shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_10px_40px_-6px_rgba(55,105,150,1)]">
+				class="rounded-full bg-gradient-to-b from-[#4fb3f7] to-[#1c6ba3] px-7 py-3.5 text-sm font-medium text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_30px_-6px_rgba(63,169,245,0.7)] transition hover:shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_10px_40px_-6px_rgba(63,169,245,1)]">
 				Get started
 			</a>
 
@@ -142,14 +166,14 @@
 			class="relative mx-auto mt-24 w-full max-w-3xl"
 			style="perspective: 1400px;">
 
-			<div class="pointer-events-none absolute -inset-x-10 -inset-y-6 rounded-[32px] bg-[#376996] opacity-20 blur-[80px]"></div>
+			<div class="pointer-events-none absolute -inset-x-10 -inset-y-6 rounded-[32px] bg-[#3fa9f5] opacity-[0.16] blur-[80px]"></div>
 
 			<div
-				class="relative rounded-2xl border border-white/[0.10] bg-gradient-to-b from-white/[0.06] to-white/[0.015] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl"
-				style="transform: rotateX(7deg); transform-origin: bottom;">
+				class="relative rounded-2xl border border-white/[0.10] bg-gradient-to-b from-white/[0.05] to-white/[0.01] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl"
+				style="transform: rotateX(6deg); transform-origin: bottom;">
 
 				<!-- window chrome -->
-				<div class="flex items-center gap-1.5 border-b border-white/[0.08] px-5 py-3.5">
+				<div class="flex items-center gap-1.5 border-b border-white/[0.09] px-5 py-3.5">
 					<span class="h-2.5 w-2.5 rounded-full bg-white/15"></span>
 					<span class="h-2.5 w-2.5 rounded-full bg-white/15"></span>
 					<span class="h-2.5 w-2.5 rounded-full bg-white/15"></span>
@@ -159,8 +183,8 @@
 				<!-- linked panels -->
 				<div class="grid grid-cols-1 gap-px bg-white/[0.06] sm:grid-cols-3">
 
-					<div class="bg-[#0A0A0C] px-5 py-5 text-left">
-						<p class="font-mono text-[10px] uppercase tracking-[0.14em] text-[#5B93C4]">Idea</p>
+					<div class="bg-[#0a0a0c] px-5 py-5 text-left">
+						<p class="font-mono text-[10px] uppercase tracking-[0.14em] text-[#5db9f7]">Idea</p>
 						<p class="mt-2 text-sm text-white/80">Simplify checkout to one page</p>
 						<div class="mt-4 space-y-2">
 							<div class="h-1.5 w-full rounded-full bg-white/10"></div>
@@ -168,30 +192,30 @@
 						</div>
 					</div>
 
-					<div class="bg-[#0A0A0C] px-5 py-5 text-left">
-						<p class="font-mono text-[10px] uppercase tracking-[0.14em] text-[#5B93C4]">Task</p>
+					<div class="bg-[#0a0a0c] px-5 py-5 text-left">
+						<p class="font-mono text-[10px] uppercase tracking-[0.14em] text-[#5db9f7]">Task</p>
 						<p class="mt-2 text-sm text-white/80">Build address autofill</p>
 						<div class="mt-4 flex items-center gap-2">
-							<span class="h-4 w-4 rounded-full border-2 border-[#5B93C4]"></span>
+							<span class="h-4 w-4 rounded-full border-2 border-[#5db9f7]"></span>
 							<div class="h-1.5 w-2/3 rounded-full bg-white/10"></div>
 						</div>
 					</div>
 
-					<div class="bg-[#0A0A0C] px-5 py-5 text-left">
-						<p class="font-mono text-[10px] uppercase tracking-[0.14em] text-[#5B93C4]">Code</p>
+					<div class="bg-[#0a0a0c] px-5 py-5 text-left">
+						<p class="font-mono text-[10px] uppercase tracking-[0.14em] text-[#5db9f7]">Code</p>
 						<p class="font-mono mt-2 text-sm text-white/80">#4471 fix(checkout)</p>
 						<div class="mt-4 space-y-2">
 							<div class="h-1.5 w-1/2 rounded-full bg-white/10"></div>
-							<div class="h-1.5 w-1/3 rounded-full bg-[#376996]/50"></div>
+							<div class="h-1.5 w-1/3 rounded-full bg-[#3fa9f5]/50"></div>
 						</div>
 					</div>
 
 				</div>
 
-				<div class="flex items-center justify-center gap-2 border-t border-white/[0.08] px-5 py-3">
-					<span class="h-1 w-1 rounded-full bg-[#5B93C4]"></span>
+				<div class="flex items-center justify-center gap-2 border-t border-white/[0.09] px-5 py-3">
+					<span class="h-1 w-1 rounded-full bg-[#5db9f7]"></span>
 					<span class="font-mono text-[10px] uppercase tracking-[0.14em] text-white/30">Everything linked, automatically</span>
-					<span class="h-1 w-1 rounded-full bg-[#5B93C4]"></span>
+					<span class="h-1 w-1 rounded-full bg-[#5db9f7]"></span>
 				</div>
 
 			</div>
@@ -200,10 +224,10 @@
 	</section>
 
 	<!-- The Problem -->
-	<section class="relative border-t border-white/[0.08]">
+	<section class="relative border-t border-white/[0.09]">
 		<div class="mx-auto max-w-4xl px-6 py-28">
 
-			<p class="font-mono text-[11px] uppercase tracking-[0.25em] text-[#5B93C4]">
+			<p class="font-mono text-[11px] uppercase tracking-[0.25em] text-[#5db9f7]">
 				The problem
 			</p>
 
@@ -212,20 +236,20 @@
 				<span class="text-white/35">The tools aren&rsquo;t.</span>
 			</h2>
 
-			<div class="mt-14 grid gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.06] sm:grid-cols-2">
-				<div class="bg-black px-6 py-6 transition hover:bg-white/[0.02]">
+			<div class="mt-14 grid gap-px overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.06] sm:grid-cols-2">
+				<div class="bg-[#08090b] px-6 py-6 transition hover:bg-white/[0.02]">
 					<p class="font-mono text-xs text-white/35">01 — Discussions</p>
 					<p class="mt-1.5 text-white/85">happen in chat.</p>
 				</div>
-				<div class="bg-black px-6 py-6 transition hover:bg-white/[0.02]">
+				<div class="bg-[#08090b] px-6 py-6 transition hover:bg-white/[0.02]">
 					<p class="font-mono text-xs text-white/35">02 — Ideas</p>
 					<p class="mt-1.5 text-white/85">stay in documents.</p>
 				</div>
-				<div class="bg-black px-6 py-6 transition hover:bg-white/[0.02]">
+				<div class="bg-[#08090b] px-6 py-6 transition hover:bg-white/[0.02]">
 					<p class="font-mono text-xs text-white/35">03 — Tasks</p>
 					<p class="mt-1.5 text-white/85">live in project boards.</p>
 				</div>
-				<div class="bg-black px-6 py-6 transition hover:bg-white/[0.02]">
+				<div class="bg-[#08090b] px-6 py-6 transition hover:bg-white/[0.02]">
 					<p class="font-mono text-xs text-white/35">04 — Code</p>
 					<p class="mt-1.5 text-white/85">lives in GitHub.</p>
 				</div>
@@ -239,10 +263,10 @@
 	</section>
 
 	<!-- The Solution -->
-	<section class="relative border-t border-white/[0.08]">
+	<section class="relative border-t border-white/[0.09]">
 		<div class="mx-auto max-w-4xl px-6 py-28 text-center">
 
-			<p class="font-mono text-[11px] uppercase tracking-[0.25em] text-[#5B93C4]">
+			<p class="font-mono text-[11px] uppercase tracking-[0.25em] text-[#5db9f7]">
 				The solution
 			</p>
 
@@ -252,15 +276,15 @@
 
 			<div class="relative mx-auto mt-16 flex max-w-[240px] flex-col items-center">
 
-				<div class="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-gradient-to-b from-[#376996]/0 via-[#376996]/60 to-[#376996]/0"></div>
+				<div class="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-gradient-to-b from-[#3fa9f5]/0 via-[#3fa9f5]/60 to-[#3fa9f5]/0"></div>
 
 				{#each ['Idea', 'Discussion', 'Planning', 'Tasks', 'Code', 'Reviews', 'Ship'] as node, i}
 					<div class="relative z-10 flex flex-col items-center">
 						<div
-							class="flex h-10 w-full items-center justify-center rounded-full border text-sm transition
+							class="flex h-10 w-full items-center justify-center rounded-full p-4 border text-sm transition
 							{i === 6
-								? 'border-[#376996]/60 bg-gradient-to-b from-[#4A7DAD] to-[#2C5478] text-white shadow-[0_0_24px_-4px_rgba(55,105,150,0.9)]'
-								: 'border-white/10 bg-black text-white/70'}">
+								? 'border-[#3fa9f5]/60 bg-gradient-to-b from-[#4fb3f7] to-[#1c6ba3] text-white shadow-[0_0_24px_-4px_rgba(63,169,245,0.9)]'
+								: 'border-white/10 bg-[#08090b] text-white/70'}">
 							{node}
 						</div>
 						{#if i < 6}
@@ -279,10 +303,10 @@
 	</section>
 
 	<!-- Built for small teams -->
-	<section class="relative border-t border-white/[0.08]">
+	<section class="relative border-t border-white/[0.09]">
 		<div class="mx-auto max-w-4xl px-6 py-28">
 
-			<p class="font-mono text-[11px] uppercase tracking-[0.25em] text-[#5B93C4]">
+			<p class="font-mono text-[11px] uppercase tracking-[0.25em] text-[#5db9f7]">
 				Built for small teams
 			</p>
 
@@ -292,8 +316,8 @@
 
 			<div class="mt-12 flex flex-wrap gap-3">
 				{#each ['Product + engineering', 'Startups', 'Open-source teams', 'Remote teams', 'Fast-moving companies'] as tag}
-					<span class="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white/70 transition hover:border-[#376996]/40 hover:text-white">
-						<span class="text-[#5B93C4]">✓</span>
+					<span class="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white/70 transition hover:border-[#3fa9f5]/40 hover:text-white">
+						<span class="text-[#5db9f7]">✓</span>
 						{tag}
 					</span>
 				{/each}
@@ -307,10 +331,10 @@
 	</section>
 
 	<!-- Features -->
-	<section class="relative border-t border-white/[0.08]">
+	<section class="relative border-t border-white/[0.09]">
 		<div class="mx-auto max-w-4xl px-6 py-28">
 
-			<p class="font-mono text-[11px] uppercase tracking-[0.25em] text-[#5B93C4]">
+			<p class="font-mono text-[11px] uppercase tracking-[0.25em] text-[#5db9f7]">
 				Features
 			</p>
 
@@ -320,10 +344,10 @@
 
 			<div class="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-3">
 				{#each features as f}
-					<div class="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02] p-7 transition hover:border-[#376996]/40 {f.large ? 'sm:col-span-2' : ''}">
-						<div class="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#376996] opacity-0 blur-3xl transition group-hover:opacity-20"></div>
+					<div class="group relative overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.02] p-7 transition hover:border-[#3fa9f5]/40 {f.large ? 'sm:col-span-2' : ''}">
+						<div class="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#3fa9f5] opacity-0 blur-3xl transition group-hover:opacity-20"></div>
 
-						<div class="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-[#5B93C4]">
+						<div class="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-[#5db9f7]">
 							{#if f.icon === 'link'}
 								<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
 							{:else if f.icon === 'message'}
@@ -345,11 +369,11 @@
 	</section>
 
 	<!-- How it works -->
-	<section id="how-it-works" class="relative border-t border-white/[0.08]">
+	<section id="how-it-works" class="relative border-t border-white/[0.09]">
 		<div class="mx-auto max-w-4xl px-6 py-28">
 
 			<div class="text-center">
-				<p class="font-mono text-[11px] uppercase tracking-[0.25em] text-[#5B93C4]">
+				<p class="font-mono text-[11px] uppercase tracking-[0.25em] text-[#5db9f7]">
 					How it works
 				</p>
 				<h2 class="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -358,11 +382,11 @@
 			</div>
 
 			<div class="relative mt-20 hidden sm:block">
-				<div class="absolute left-0 right-0 top-5 h-px bg-gradient-to-r from-[#376996]/0 via-[#376996]/50 to-[#376996]/0"></div>
+				<div class="absolute left-0 right-0 top-5 h-px bg-gradient-to-r from-[#3fa9f5]/0 via-[#3fa9f5]/50 to-[#3fa9f5]/0"></div>
 				<div class="grid grid-cols-5 gap-4">
 					{#each steps as step}
 						<div class="flex flex-col items-center text-center">
-							<span class="font-mono relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[#376996]/50 bg-black text-xs text-[#8FB6DC]">
+							<span class="font-mono relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[#3fa9f5]/50 bg-[#08090b] text-xs text-[#8fb6dc]">
 								{step.n}
 							</span>
 							<span class="mt-4 text-sm text-white/70">{step.label}</span>
@@ -374,7 +398,7 @@
 			<div class="mt-4 flex flex-col items-center gap-4 sm:hidden">
 				{#each steps as step}
 					<div class="flex items-center gap-4 self-stretch">
-						<span class="font-mono flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#376996]/50 bg-black text-xs text-[#8FB6DC]">
+						<span class="font-mono flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#3fa9f5]/50 bg-[#08090b] text-xs text-[#8fb6dc]">
 							{step.n}
 						</span>
 						<span class="text-white/80">{step.label}</span>
@@ -390,7 +414,7 @@
 	</section>
 
 	<!-- Final CTA -->
-	<section class="relative border-t border-white/[0.08]">
+	<section class="relative border-t border-white/[0.09]">
 		<div class="mx-auto max-w-3xl px-6 py-32 text-center">
 
 			<h2 class="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
@@ -398,7 +422,7 @@
 					Build software without
 				</span>
 				<br />
-				<span class="bg-gradient-to-r from-[#9BC0E4] via-[#5B93C4] to-[#2C5478] bg-clip-text text-transparent">
+				<span class="bg-gradient-to-r from-[#9bd4fb] via-[#5db9f7] to-[#1c6ba3] bg-clip-text text-transparent">
 					losing context.
 				</span>
 			</h2>
@@ -409,15 +433,15 @@
 
 			<a
 				href="/register"
-				class="mt-10 inline-block rounded-full bg-gradient-to-b from-[#4A7DAD] to-[#2C5478] px-8 py-4 text-sm font-medium text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_40px_-6px_rgba(55,105,150,0.8)] transition hover:shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_12px_50px_-6px_rgba(55,105,150,1)]">
-				Get early access
+				class="mt-10 inline-block rounded-full bg-gradient-to-b from-[#4fb3f7] to-[#1c6ba3] px-8 py-4 text-sm font-medium text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_40px_-6px_rgba(63,169,245,0.8)] transition hover:shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_12px_50px_-6px_rgba(63,169,245,1)]">
+				Get Started
 			</a>
 
 		</div>
 	</section>
 
 	<!-- Footer -->
-	<footer class="relative border-t border-white/[0.08]">
+	<footer class="relative border-t border-white/[0.09]">
 		<div class="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 py-12 sm:flex-row sm:justify-between">
 
 			<div class="flex items-center gap-2.5">

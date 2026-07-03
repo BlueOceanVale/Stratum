@@ -20,4 +20,6 @@ async fn helloworld() -> &'static str {
     "Hello world"
 }
 
-async fn users_get()
+async fn users_get() {
+    
+}
