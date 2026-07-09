@@ -3,15 +3,6 @@
 *.env
 .env.local
 
-# Go Binaries and Executables
-/cmd/api/api
-/cmd/api/main
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-bin/
 
 # OS Specific Files
 .DS_Store
