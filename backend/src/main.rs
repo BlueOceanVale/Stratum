@@ -55,5 +55,16 @@ async fn register(
     println!("Username: {}", payload.name);
     println!("Email: {}", payload.email);
 
-    "User received!"
+
+    sqlx::query("
+        INSERT INTO users(name, email, password_hash)
+        VALUES($1, $2, $3)
+    ")  .bind(payload.name)
+        .bind(payload.email)
+        .bind(payload.password)
+        .execute(&state.pool)
+        .await
+        .unwrap();
+
+    "User created!"
 }
