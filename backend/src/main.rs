@@ -1,4 +1,4 @@
-use axum::{extract::State, {routing::get, post}, Router, Json};
+use axum::{Json, Router, extract::State, routing::{get, post}};
 use tokio::net::TcpListener;
 use serde::Deserialize;
 use sqlx::PgPool;
@@ -20,7 +20,7 @@ struct RegisterRequest {
 async fn main() {
     dotenvy::dotenv().unwrap();
 
-    let db_url = std::env::var("DB_URL").unwrap();
+    let db_url = std::env::var("DATABASE_URL").unwrap();
 
     let pool = PgPool::connect(&db_url).await.unwrap();
     
@@ -56,15 +56,21 @@ async fn register(
     println!("Email: {}", payload.email);
 
 
-    sqlx::query("
+    let result = sqlx::query("
         INSERT INTO users(name, email, password_hash)
         VALUES($1, $2, $3)
     ")  .bind(payload.name)
         .bind(payload.email)
         .bind(payload.password)
         .execute(&state.pool)
-        .await
-        .unwrap();
+        .await;
 
-    "User created!"
+    match result {
+        Ok(_) => "User created!",
+        Err(err) => {
+            println!("Database Error: {err}");
+            "Failed to create user!"
+        }
+    }
+
 }
