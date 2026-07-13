@@ -1,4 +1,4 @@
-use axum::{Json, Router, extract::State, routing::{get, post}};
+use axum::{Json, Router, extract::State, routing::{get, post}, http::StatusCode};
 use tokio::net::TcpListener;
 use serde::Deserialize;
 use sqlx::PgPool;
@@ -8,6 +8,10 @@ use argon2::{
     Argon2, PasswordHasher, password_hash::{Error, SaltString},
 };
 
+#[derive(Serialize)]
+struct Response {
+    message: String,
+}
 
 #[derive(Clone)]
 struct AppState {
@@ -68,9 +72,7 @@ async fn home() -> &'static str {
 async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
-) -> &'static str {
-    println!("Username: {}", payload.name);
-    println!("Email: {}", payload.email);
+) -> (StatusCode, Json<Response>) {
 
     let hashed_password = hash_password(&payload.password);
 
@@ -78,7 +80,7 @@ async fn register(
         Ok(value) => value,
         Err(err) => {
             println!("{err}");
-            return "Failed to hash password"
+            return (StatusCode::I, Json(Response {message: "Failed to create user".to_string()}))
         }
     };
 
@@ -92,10 +94,9 @@ async fn register(
         .await;
 
     match result {
-        Ok(_) => "User created!",
+        Ok(_) => (StatusCode::CREATED, Json(Response{ message:"User created!".to_string() })),
         Err(err) => {
-            println!("Database Error: {err}");
-            "Failed to create user!"
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(Response{message:"Failed to create user!".to_string()}))
         }
     }
 
