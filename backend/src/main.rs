@@ -1,41 +1,15 @@
-use axum::{Json, Router, extract::State, routing::{get, post}, http::StatusCode};
+use axum::{Router, routing::{get, post}};
 use tokio::net::TcpListener;
-use serde::Deserialize;
 use sqlx::PgPool;
 use dotenvy;
-use rand_core;
-use argon2::{
-    Argon2, PasswordHasher, password_hash::{Error, SaltString},
-};
 
-#[derive(Serialize)]
-struct Response {
-    message: String,
-}
+mod state;
+use state::AppState;
 
-#[derive(Clone)]
-struct AppState {
-    pool: PgPool,
-}
+mod handlers;
+use handlers::{register, health, home};
 
-#[derive(Deserialize)]
-struct RegisterRequest {
-    name: String,
-    email: String,
-    password: String,
-}
 
-fn hash_password(password: &str) -> Result<String, Error> {
-    let argon2 = Argon2::default();
-
-    let salt = SaltString::generate(&mut rand_core::OsRng);
-
-    let password_hash = argon2.hash_password(password.as_bytes(), &salt);
-    match password_hash {
-        Ok(hash) => Ok(hash.to_string()),
-        Err(err) => Err(err),
-    }
-}
 
 #[tokio::main]
 async fn main() {
@@ -60,44 +34,3 @@ async fn main() {
     println!("Server starting on port 8080");
     axum::serve(listener, app).await.unwrap();
 }
-
-async fn health() -> &'static str {
-    "ok"
-}
-
-async fn home() -> &'static str {
-    "Backend Working"
-}
-
-async fn register(
-    State(state): State<AppState>,
-    Json(payload): Json<RegisterRequest>,
-) -> (StatusCode, Json<Response>) {
-
-    let hashed_password = hash_password(&payload.password);
-
-    let hashed_password = match hashed_password {
-        Ok(value) => value,
-        Err(err) => {
-            println!("{err}");
-            return (StatusCode::I, Json(Response {message: "Failed to create user".to_string()}))
-        }
-    };
-
-    let result = sqlx::query("
-        INSERT INTO users(name, email, password_hash)
-        VALUES($1, $2, $3)
-    ")  .bind(payload.name)
-        .bind(payload.email)
-        .bind(hashed_password)
-        .execute(&state.pool)
-        .await;
-
-    match result {
-        Ok(_) => (StatusCode::CREATED, Json(Response{ message:"User created!".to_string() })),
-        Err(err) => {
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(Response{message:"Failed to create user!".to_string()}))
-        }
-    }
-
-} 
