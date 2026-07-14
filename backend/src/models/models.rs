@@ -22,3 +22,17 @@ pub struct Project {
     pub title: String,
     pub description: String,
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Claims {
+    pub sub: i64,
+    pub email: String,
+    pub exp: usize,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Workspace {
+    pub title: String,
+    pub description: Option<String>,
+    pub tag: Option<String>,
+}
