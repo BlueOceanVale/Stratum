@@ -1,7 +1,9 @@
-pub async fn health() -> &'static str {
-    "ok"
+use axum::Json;
+
+pub async fn health() -> Json<String> {
+    Json("ok".to_string())
 }
 
-pub async fn home() -> &'static str {
-    "Backend Working"
+pub async fn home() -> Json<String> {
+    Json("Backend Working".to_string())
 }

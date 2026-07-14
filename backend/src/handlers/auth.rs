@@ -1,23 +1,14 @@
 use axum::{Json, http::StatusCode, extract::State};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
 use crate::state::AppState;
 use argon2::{
     Argon2, PasswordHasher, password_hash::{PasswordHash, PasswordVerifier, Error, SaltString, rand_core},
 };
-use crate::state::LoginRequest;
+use crate::models::models::{LoginRequest, User};
 
 #[derive(Serialize)]
 pub struct Response {
     pub message: String,
-}
-
-#[derive(FromRow)]
-struct User {
-    id: i64,
-    name: String,
-    email: String,
-    password_hash: String
 }
 
 #[derive(Deserialize)]
@@ -114,4 +105,8 @@ pub async fn login(
         StatusCode::OK,
         Json(Response { message: "Login successful".to_string() })
     )
+}
+
+pub async fn logout() -> StatusCode {
+    StatusCode::NO_CONTENT  
 }

@@ -7,7 +7,9 @@ mod state;
 use state::AppState;
 
 mod handlers;
-use handlers::{register, health, home};
+use handlers::{register, home, login, logout, health};
+
+pub mod models;
 
 
 
@@ -27,6 +29,8 @@ async fn main() {
         .route("/", get(home))
         .route("/health", get(health))
         .route("/register", post(register))
+        .route("/logout", post(logout))
+        .route("/login", post(login))
         .with_state(state);
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.unwrap();
