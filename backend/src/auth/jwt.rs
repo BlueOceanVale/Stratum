@@ -21,8 +21,12 @@ pub fn create_token(user: &User) -> Result<String, jsonwebtoken::error::Error> {
     jsonwebtoken::encode(&header, &claims, &encoding_key)
 }
 
-pub fn verify_token(token: &str) -> Result<Claims, Error> {
+pub fn verify_token(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
+    let validation = Validation::new(Algorithm::HS256);
     let secret = std::env::var("JWT_SECRET").unwrap();
-    
-}
+    let decoding_key = DecodingKey::from_secret(secret.as_bytes());
 
+    let token_data = jsonwebtoken::decode::<Claims>(token, &decoding_key, &validation)?;
+    
+    Ok(token_data.claims)
+}
