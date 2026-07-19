@@ -1,21 +1,22 @@
-use axum::{Json, http::StatusCode, extract::State};
+use axum::{Json, extract::State, http::StatusCode};
 use serde::{Deserialize, Serialize};
 use crate::state::AppState;
+use crate::auth::jwt::create_token;
 use argon2::{
     Argon2, PasswordHasher, password_hash::{PasswordHash, PasswordVerifier, Error, SaltString, rand_core},
 };
-use crate::models::models::{LoginRequest, User};
-
-#[derive(Serialize)]
-pub struct Response {
-    pub message: String,
-}
+use crate::models::models::{LoginRequest, User, LoginResponse, ErrorResponse};
 
 #[derive(Deserialize)]
 pub struct RegisterRequest {
     pub name: String,
     pub email: String,
     pub password: String,
+}
+
+#[derive(Serialize)]
+pub struct MessageResponse {
+    pub message: String,
 }
 
 fn hash_password(password: &str) -> Result<String, Error> {
@@ -40,14 +41,14 @@ fn verify_password(password: &str, hash: &str) -> bool {
 pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
-) -> (StatusCode, Json<Response>) {
+) -> (StatusCode, Json<MessageResponse>) {
     let hashed_password = hash_password(&payload.password);
 
     let hashed_password = match hashed_password {
         Ok(value) => value,
         Err(err) => {
             println!("{err}");
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(Response {message: "Failed to create user".to_string()}))
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(MessageResponse { message: "Failed to create user".to_string() }))
         }
     };
 
@@ -62,9 +63,9 @@ pub async fn register(
         .await;
 
     match result {
-        Ok(_) => (StatusCode::CREATED, Json(Response{ message:"User created!".to_string() })),
+        Ok(_) => (StatusCode::CREATED, Json(MessageResponse{ message: "User created!".to_string() })),
         Err(_err) => {
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(Response{message:"Failed to create user!".to_string()}))
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(MessageResponse{ message: "Failed to create user!".to_string() }))
         }
     }
 }
@@ -73,8 +74,8 @@ pub async fn register(
 pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
-) -> (StatusCode, Json<Response>) {
-    let user = sqlx::query_as::<_,User>(
+) -> Result<(StatusCode, Json<LoginResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let user = sqlx::query_as::<_, User>(
         "SELECT id, name, email, password_hash
         FROM users
         WHERE email=$1"
@@ -85,26 +86,37 @@ pub async fn login(
 
     let user = match user {
         Ok(user) => user,
-        Err(_) => return (
+        Err(_) => return Err((
             StatusCode::UNAUTHORIZED,
-            Json(Response{
-                message: "Invalid credentials".to_string()
-            }),
-        )
+            Json(
+                ErrorResponse{
+                    error: "Invalid email or password".to_string(),
+                }
+            ),
+        ))
     };
 
     if !verify_password(&payload.password, &user.password_hash) {
-        return (
+        return Err((
             StatusCode::UNAUTHORIZED,
             Json(
-                Response{message: "Invalid credentials".to_string()}
-            )
-        )
+                ErrorResponse { error: "Invalid email or password".to_string() }
+            ),
+        ));
     }
-    (
+
+    let token = match create_token(&user) {
+        Ok(token) => token,
+        Err(_) => return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse { error: "Failed to create authentication token".to_string() }),
+        )),
+    };
+
+    Ok((
         StatusCode::OK,
-        Json(Response { message: "Login successful".to_string() })
-    )
+        Json(LoginResponse { access_token: token, token_type: "Bearer".to_string() }),
+    ))
 }
 
 pub async fn logout() -> StatusCode {

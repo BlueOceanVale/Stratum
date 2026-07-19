@@ -23,7 +23,7 @@ pub struct Project {
     pub description: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Claims {
     pub sub: i64,
     pub email: String,
@@ -35,4 +35,20 @@ pub struct Workspace {
     pub title: String,
     pub description: Option<String>,
     pub tag: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct LoginResponse {
+    pub access_token: String,
+    pub token_type: String,
+}
+
+#[derive(Serialize)]
+pub struct ErrorResponse {
+    pub error: String,
+}
+
+#[derive(Serialize)]
+pub struct SuccessResponse {
+    pub message: String,
 }
