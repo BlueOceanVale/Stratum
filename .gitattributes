@@ -1,0 +1,22 @@
+# Frontend build output
+frontend/build/** linguist-generated
+frontend/.svelte-kit/** linguist-generated
+frontend/dist/** linguist-generated
+
+# Frontend dependencies
+frontend/node_modules/** linguist-vendored
+
+# Generated files
+frontend/*.min.js linguist-generated
+frontend/*.generated.ts linguist-generated
+
+# Lock files
+frontend/package-lock.json linguist-generated
+frontend/pnpm-lock.yaml linguist-generated
+frontend/bun.lock linguist-generated
+
+# Generated documentation
+frontend/docs/generated/** linguist-generated
+
+# Backend build output
+backend/target/** linguist-generated
