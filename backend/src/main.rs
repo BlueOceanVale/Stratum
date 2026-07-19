@@ -1,4 +1,5 @@
 use axum::{Router, routing::{get, post}};
+use axum::middleware::from_fn;
 use tokio::net::TcpListener;
 use sqlx::PgPool;
 use dotenvy;
@@ -10,8 +11,9 @@ mod handlers;
 use handlers::{register, home, login, logout, health};
 
 pub mod models;
-
-
+pub mod middleware;
+mod auth;
+use crate::middleware::auth::auth;
 
 #[tokio::main]
 async fn main() {
@@ -25,12 +27,16 @@ async fn main() {
         pool,
     };
 
+    let protected = Router::new()
+        .route("/logout", post(logout))
+        .route_layer(from_fn(auth));
+
     let app = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
         .route("/register", post(register))
-        .route("/logout", post(logout))
         .route("/login", post(login))
+        .merge(protected)
         .with_state(state);
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.unwrap();

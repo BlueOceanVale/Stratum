@@ -1,3 +1,3 @@
 pub mod jwt;
 
-pub use jwt::create_token;
+pub use jwt::{create_token, verify_token};
