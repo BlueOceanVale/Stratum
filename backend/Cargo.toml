@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 argon2 = "0.5.3"
-axum = "0.8"
+axum = { version = "0.8", features = ["macros"] }
 chrono = "0.4.45"
 dotenvy = "0.15.7"
 jsonwebtoken = "10.4.0"

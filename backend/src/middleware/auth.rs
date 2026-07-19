@@ -1,6 +1,6 @@
 use axum::{
-    extract::Request,
-    http::{header::AUTHORIZATION, StatusCode},
+    body::Body,
+    http::{header::AUTHORIZATION, Request, StatusCode},
     middleware::Next,
     response::Response,
 };
@@ -8,7 +8,7 @@ use axum::{
 use crate::auth::jwt::verify_token;
 
 pub async fn auth(
-    mut request: Request,
+    mut request: Request<Body>,
     next: Next,
 ) -> Result<Response, StatusCode> {
     let auth_header = request

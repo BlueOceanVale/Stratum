@@ -13,6 +13,7 @@ use handlers::{register, home, login, logout, health};
 pub mod models;
 pub mod middleware;
 mod auth;
+use crate::handlers::workspace::add_workspace;
 use crate::middleware::auth::auth;
 
 #[tokio::main]
@@ -29,7 +30,9 @@ async fn main() {
 
     let protected = Router::new()
         .route("/logout", post(logout))
-        .route_layer(from_fn(auth));
+        .route("/workspace", post(add_workspace))
+        .route_layer(from_fn(auth))
+        .with_state(state.clone());
 
     let app = Router::new()
         .route("/", get(home))

@@ -1,24 +1,34 @@
-use axum::{{http::StatusCode}, extract::State, Json};
-use serde::Serialize;
+use axum::{{http::StatusCode}, extract::{{Extension, State}, Json}};
+use serde::Deserialize;
 use sqlx;
 use crate::state::AppState;
-use crate::models::models::{ErrorResponse, SuccessResponse};
+use crate::models::models::{ErrorResponse, SuccessResponse, Claims};
 
-#[derive(Serialize)]
+#[derive(Deserialize)]
 pub struct CreateWorkspaceRequest {
     pub title: String,
     pub description: Option<String>,
     pub tag: Option<String>,
 }
 
+#[axum::debug_handler]
 pub async fn add_workspace(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(worksp): Json<CreateWorkspaceRequest>,
-) -> Result<(StatusCode,Json<SuccessResponse>) , (StatusCode, Json<ErrorResponse>)> {
+) -> Result<(StatusCode, Json<SuccessResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let owner_id = claims.sub;
+
     let result = sqlx::query(
-        "INSERT INTO workspaces(title, description, tag)
-        VALUES($1, $2, $3)"
+        "INSERT INTO workspaces (
+            owner_id,
+            title, 
+            description, 
+            tag
+        )
+        VALUES($1, $2, $3, $4)"
     )
+        .bind(owner_id)
         .bind(worksp.title)
         .bind(worksp.description)
         .bind(worksp.tag)
