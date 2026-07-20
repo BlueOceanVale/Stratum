@@ -1,7 +1,7 @@
 use axum::{{http::StatusCode}, extract::{{Extension, State}, Json}};
 use serde::Deserialize;
 use sqlx;
-use crate::state::AppState;
+use crate::{models::models::Workspace, state::AppState};
 use crate::models::models::{ErrorResponse, SuccessResponse, Claims};
 
 #[derive(Deserialize)]
@@ -11,7 +11,7 @@ pub struct CreateWorkspaceRequest {
     pub tag: Option<String>,
 }
 
-#[axum::debug_handler]
+
 pub async fn add_workspace(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -49,5 +49,37 @@ pub async fn add_workspace(
                 error: "Failed to create workspace".to_string(),
             }),
         )),
+    }
+}
+
+pub async fn list_workspace(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Result<(StatusCode, Json<Vec<Workspace>>), (StatusCode, ErrorResponse)> {
+    let owner_id = claims.sub;
+
+    let result = sqlx::query_as::<_, Workspace>(
+        "SELECT id, title, description, tag
+         FROM workspaces
+         WHERE owner_id = $1"
+    )
+    .bind(owner_id)
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(workspaces) => Ok((
+            StatusCode::OK,
+            Json(workspaces),
+        )),
+        Err(err) => {
+            eprintln!("workspace not found error: {}", err);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ErrorResponse {
+                    error: "Failed to fetch workspaces from database".to_string(),
+                },
+            ))
+        }
     }
 }
