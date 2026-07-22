@@ -1,8 +1,9 @@
 use axum::{{http::StatusCode}, extract::{{Extension, State}, Json}};
 use serde::Deserialize;
-use sqlx;
+use sqlx::{self, types::Json};
 use crate::{models::models::Workspace, state::AppState};
 use crate::models::models::{ErrorResponse, SuccessResponse, Claims};
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct CreateWorkspaceRequest {
@@ -83,3 +84,92 @@ pub async fn list_workspace(
         }
     }
 }
+
+pub async fn get_workspace(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<(StatusCode, Json<Workspace>), (StatusCode, ErrorResponse)> {
+    let owner_id = claims.sub;
+
+    let result = sqlx::query_as::<_, Workspace>(
+        "SELECT id, title, description, tag
+         FROM workspaces
+         WHERE id = $1 AND owner_id = $2"
+    )
+    .bind(id)
+    .bind(owner_id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(workspace)) => Ok((StatusCode::OK, Json(workspace))),
+
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            ErrorResponse {
+                error: "Workspace not found".to_string(),
+            },
+        )),
+
+        Err(err) => {
+            eprintln!("Failed to fetch workspace {}: {:?}", id, err);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ErrorResponse {
+                    error: "Failed to fetch workspace from database".to_string(),
+                },
+            ))
+        }
+    }
+}
+
+pub async fn delete_workspace(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<(StatusCode, Json<SuccessResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let owner_id = claims.sub;
+
+    let result = sqlx::query(
+        "DELETE FROM workspaces
+         WHERE owner_id = $1 AND id = $2"
+    )
+    .bind(owner_id)
+    .bind(id)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                return Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse {
+                        error: "Workspace not found".to_string(),
+                    }),
+                ));
+            }
+
+            Ok((
+                StatusCode::OK,
+                Json(SuccessResponse {
+                    message: "Workspace deleted".to_string(),
+                }),
+            ))
+        }
+
+        Err(err) => {
+            eprintln!("workspace deletion error: {}", err);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to delete workspace".to_string(),
+                }),
+            ))
+        }
+    }
+}
+
+
+
