@@ -6,6 +6,12 @@ pub struct LoginRequest {
     pub email: String,
     pub password: String,
 }
+#[derive(Deserialize)]
+pub struct UpdateWorkspaceRequest {
+    pub title: String,
+    pub description: Option<String>,
+    pub tag: Option<String>,
+}
 
 #[derive(FromRow)]
 pub struct User {

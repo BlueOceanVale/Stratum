@@ -1,8 +1,8 @@
-use axum::{{http::StatusCode}, extract::{{Extension, State}, Json}};
+use axum::{{http::StatusCode}, extract::{{Extension, Path, State}, Json}};
 use serde::Deserialize;
-use sqlx::{self, types::Json};
+use sqlx;
 use crate::{models::models::Workspace, state::AppState};
-use crate::models::models::{ErrorResponse, SuccessResponse, Claims};
+use crate::models::models::{ErrorResponse, SuccessResponse, Claims, UpdateWorkspaceRequest};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -171,5 +171,58 @@ pub async fn delete_workspace(
     }
 }
 
+pub async fn update_workspace(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateWorkspaceRequest>,
+) -> Result<(StatusCode, Json<Workspace>), (StatusCode, Json<ErrorResponse>)> {
+    let owner_id = claims.sub;
 
+    let result = sqlx::query_as::<_, Workspace>(
+        "
+        UPDATE workspaces
+        SET
+            title = $1,
+            description = $2,
+            tag = $3
+        WHERE
+            owner_id = $4
+            AND id = $5
+        RETURNING id, title, description, tag
+        "
+    )
+    .bind(payload.title)
+    .bind(payload.description)
+    .bind(payload.tag)
+    .bind(owner_id)
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(workspace)) => Ok((
+            StatusCode::OK,
+            Json(workspace),
+        )),
+
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse {
+                error: "Workspace not found".to_string(),
+            }),
+        )),
+
+        Err(err) => {
+            eprintln!("workspace update error: {}", err);
+
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to update workspace".to_string(),
+                }),
+            ))
+        }
+    }
+}
 
