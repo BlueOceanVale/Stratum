@@ -22,12 +22,7 @@ pub struct User {
 }
 
 
-#[derive(Debug)]
-pub struct Project {
-    pub id: u32,
-    pub title: String,
-    pub description: String,
-}
+
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Claims {
@@ -57,4 +52,20 @@ pub struct ErrorResponse {
 #[derive(Serialize)]
 pub struct SuccessResponse {
     pub message: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Project {
+    pub id: Uuid,
+    pub workspace_id: Uuid,
+    pub title: String,
+    pub description: Option<String>,
+    pub tag: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateProjectRequest {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub tag: Option<String>,
 }
