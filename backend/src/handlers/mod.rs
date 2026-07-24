@@ -6,4 +6,5 @@ pub mod health;
 pub use health::{home, health};
 pub mod workspace;
 pub mod projects;
+pub mod tasks;
 pub use workspace::add_workspace;

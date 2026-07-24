@@ -69,3 +69,22 @@ pub struct UpdateProjectRequest {
     pub description: Option<String>,
     pub tag: Option<String>,
 }
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Task {
+    pub id: Uuid,
+    pub project_id: Uuid,
+    pub workspace_id: Uuid,
+    pub title: String,
+    pub description: Option<String>,
+    pub status: String,
+    pub priority: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateTaskRequest {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub status: Option<String>,
+    pub priority: Option<String>,
+}
