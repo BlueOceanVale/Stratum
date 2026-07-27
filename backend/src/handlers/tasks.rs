@@ -23,12 +23,12 @@ pub async fn add_task(
     let owner_id = claims.sub;
 
     // Verify parent project exists within the workspace and belongs to owner
-    let project_exists = sqlx::query!(
-        "SELECT id FROM projects WHERE id = $1 AND workspace_id = $2 AND owner_id = $3",
-        project_id,
-        workspace_id,
-        owner_id
+    let project_exists = sqlx::query(
+        "SELECT id FROM projects WHERE id = $1 AND workspace_id = $2 AND owner_id = $3"
     )
+    .bind(project_id)
+    .bind(workspace_id)
+    .bind(owner_id)
     .fetch_optional(&state.pool)
     .await;
 

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct LoginRequest {
@@ -15,7 +16,7 @@ pub struct UpdateWorkspaceRequest {
 
 #[derive(FromRow)]
 pub struct User {
-    pub id: i64,
+    pub id: Uuid,
     pub name: String,
     pub email: String,
     pub password_hash: String
@@ -26,13 +27,14 @@ pub struct User {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Claims {
-    pub sub: i64,
+    pub sub: Uuid,
     pub email: String,
     pub exp: usize,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, FromRow)]
 pub struct Workspace {
+    pub id: Uuid,
     pub title: String,
     pub description: Option<String>,
     pub tag: Option<String>,

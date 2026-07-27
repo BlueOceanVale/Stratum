@@ -22,11 +22,11 @@ pub async fn add_project(
     let owner_id = claims.sub;
 
     // Optional check: Ensure the workspace actually belongs to the user before adding a project
-    let workspace_exists = sqlx::query!(
-        "SELECT id FROM workspaces WHERE id = $1 AND owner_id = $2",
-        payload.workspace_id,
-        owner_id
+    let workspace_exists = sqlx::query(
+        "SELECT id FROM workspaces WHERE id = $1 AND owner_id = $2"
     )
+    .bind(payload.workspace_id)
+    .bind(owner_id)
     .fetch_optional(&state.pool)
     .await;
 
