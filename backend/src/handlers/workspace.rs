@@ -19,6 +19,7 @@ pub struct CreateWorkspaceRequest {
     pub tag: Option<String>,
 }
 
+// 1. ADD WORKSPACE
 pub async fn add_workspace(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -101,6 +102,8 @@ pub async fn add_workspace(
     ))
 }
 
+
+// 2. LIST WORKSPACES
 pub async fn list_workspace(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -132,6 +135,8 @@ pub async fn list_workspace(
     }
 }
 
+
+//3. GET ONE WORKSPACE
 pub async fn get_workspace(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -170,6 +175,8 @@ pub async fn get_workspace(
     }
 }
 
+
+// 4. UPDATE WORKSPACE
 pub async fn update_workspace(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -221,6 +228,8 @@ pub async fn update_workspace(
     }
 }
 
+
+// 5. DELETE WORKSPACE
 pub async fn delete_workspace(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

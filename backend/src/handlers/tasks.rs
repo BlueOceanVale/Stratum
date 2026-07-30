@@ -14,6 +14,7 @@ pub struct CreateTaskRequest {
     pub priority: Option<String>,
 }
 
+// 1. ADD TASK
 pub async fn add_task(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -95,6 +96,7 @@ pub async fn add_task(
     }
 }
 
+// 2. LIST TASKS
 pub async fn list_tasks(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -127,6 +129,7 @@ pub async fn list_tasks(
     }
 }
 
+// 3. GET ONE TASK
 pub async fn get_task(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -166,6 +169,7 @@ pub async fn get_task(
     }
 }
 
+// 4. UPDATE TASK
 pub async fn update_task(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -221,6 +225,7 @@ pub async fn update_task(
     }
 }
 
+// 5. DELETE TASK
 pub async fn delete_task(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

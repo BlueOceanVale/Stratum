@@ -120,7 +120,7 @@ pub async fn add_workspace_member(
 }
 
 // 2. REMOVE MEMBER
-pub async fn remove_workspace_member(
+pub async fn delete_workspace_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((workspace_id, member_id)): Path<(Uuid, Uuid)>,

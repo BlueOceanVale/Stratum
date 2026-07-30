@@ -14,6 +14,7 @@ pub struct CreateProjectRequest {
     pub tag: Option<String>,
 }
 
+// 1.ADD PROJECT
 pub async fn add_project(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -86,6 +87,7 @@ pub async fn add_project(
     }
 }
 
+// 2. LIST PROJECTS
 pub async fn list_projects(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -117,6 +119,8 @@ pub async fn list_projects(
     }
 }
 
+
+// 3. GET ONE PROJECT
 pub async fn get_project(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -155,6 +159,8 @@ pub async fn get_project(
     }
 }
 
+
+// 4. UPDATE PROJECT
 pub async fn update_project(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -206,6 +212,7 @@ pub async fn update_project(
     }
 }
 
+// 5. DELETE PROJECT
 pub async fn delete_project(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

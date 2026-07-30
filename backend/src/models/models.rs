@@ -90,3 +90,50 @@ pub struct UpdateTaskRequest {
     pub status: Option<String>,
     pub priority: Option<String>,
 }
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Client {
+    pub id: Uuid,
+    pub workspace_id: Uuid,
+    pub name: String,
+    pub email: Option<String>,
+    pub company: Option<String>,
+    pub status: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateClientRequest {
+    pub name: String,
+    pub email: Option<String>,
+    pub company: Option<String>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateClientRequest {
+    pub name: Option<String>,
+    pub email: Option<String>,
+    pub company: Option<String>,
+    pub status: Option<String>,
+}
+
+// --- Dashboard Aggregation DTOs ---
+
+#[derive(Debug, Serialize)]
+pub struct ClientSummary {
+    pub id: Uuid,
+    pub name: String,
+    pub company: Option<String>,
+    pub total_projects: i64,
+    pub total_tasks: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DashboardStats {
+    pub total_clients: i64,
+    pub total_projects: i64,
+    pub total_tasks: i64,
+    pub pending_tasks: i64,
+    pub completed_tasks: i64,
+    pub clients: Vec<ClientSummary>,
+}
