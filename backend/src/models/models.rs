@@ -32,7 +32,7 @@ pub struct Claims {
     pub exp: usize,
 }
 
-#[derive(Deserialize, Debug, FromRow)]
+#[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct Workspace {
     pub id: Uuid,
     pub title: String,
@@ -117,7 +117,6 @@ pub struct UpdateClientRequest {
     pub status: Option<String>,
 }
 
-// --- Dashboard Aggregation DTOs ---
 
 #[derive(Debug, Serialize)]
 pub struct ClientSummary {
@@ -136,4 +135,31 @@ pub struct DashboardStats {
     pub pending_tasks: i64,
     pub completed_tasks: i64,
     pub clients: Vec<ClientSummary>,
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Comment {
+    pub id: Uuid,
+    pub workspace_id: Uuid,
+    pub author_id: Uuid,
+    pub project_id: Option<Uuid>,
+    pub task_id: Option<Uuid>,
+    pub content: String,
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+
+#[derive(Debug, Serialize, FromRow)]
+pub struct CommentWithAuthor {
+    pub id: Uuid,
+    pub author_id: Uuid,
+    pub author_name: String,
+    pub author_email: String,
+    pub content: String,
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateCommentRequest {
+    pub content: String,
 }

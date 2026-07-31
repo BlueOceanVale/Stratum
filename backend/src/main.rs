@@ -1,49 +1,30 @@
-use axum::{Router, routing::{get, post}};
-use axum::middleware::from_fn;
-use tokio::net::TcpListener;
-use sqlx::PgPool;
-use dotenvy;
-
-mod state;
-use state::AppState;
-
-mod handlers;
-use handlers::{register, home, login, logout, health};
-
-pub mod models;
-pub mod middleware;
 mod auth;
-use crate::handlers::workspace::add_workspace;
-use crate::middleware::auth::auth;
+mod handlers;
+mod middleware;
+mod models;
+mod routes;
+mod state;
+
+use state::AppState;
+use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() {
-    dotenvy::dotenv().unwrap();
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/my_db".to_string());
 
-    let db_url = std::env::var("DATABASE_URL").unwrap();
+    let pool = sqlx::PgPool::connect(&database_url)
+        .await
+        .expect("Failed to connect to Postgres");
 
-    let pool = PgPool::connect(&db_url).await.unwrap();
-    
-    let state = AppState {
-        pool,
-    };
+    let state = AppState { pool };
 
-    let protected = Router::new()
-        .route("/logout", post(logout))
-        .route("/workspace", post(add_workspace))
-        .route_layer(from_fn(auth))
-        .with_state(state.clone());
+    // Build the router with state
+    let app = routes::create_router(state);
 
-    let app = Router::new()
-        .route("/", get(home))
-        .route("/health", get(health))
-        .route("/register", post(register))
-        .route("/login", post(login))
-        .merge(protected)
-        .with_state(state);
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    println!("🚀 Server running on http://{}", addr);
 
-    let listener = TcpListener::bind("0.0.0.0:8080").await.unwrap();
-
-    println!("Server starting on port 8080");
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
