@@ -40,63 +40,63 @@ pub fn create_router(state: AppState) -> Router {
         // Workspaces
         .route("/workspaces", post(add_workspace).get(list_workspace))
         .route(
-            "/workspaces/:workspace_id",
+            "/workspaces/{workspace_id}",
             put(update_workspace).delete(delete_workspace),
         )
         
         // Workspace Members
         .route(
-            "/workspaces/:workspace_id/members",
+            "/workspaces/{workspace_id}/members",
             post(add_workspace_member),
         )
         .route(
-            "/workspaces/:workspace_id/members/:member_id",
+            "/workspaces/{workspace_id}/members/{member_id}",
             put(update_member_role).delete(delete_workspace_member),
         )
         
         // Clients
         .route(
-            "/workspaces/:workspace_id/clients",
+            "/workspaces/{workspace_id}/clients",
             post(add_client).get(list_clients),
         )
         .route(
-            "/workspaces/:workspace_id/clients/:client_id",
+            "/workspaces/{workspace_id}/clients/{client_id}",
             put(update_client).delete(delete_client),
         )
         
         // Projects
         .route(
-            "/workspaces/:workspace_id/projects",
+            "/workspaces/{workspace_id}/projects",
             post(add_project).get(list_projects),
         )
         .route(
-            "/workspaces/:workspace_id/projects/:project_id",
+            "/workspaces/{workspace_id}/projects/{project_id}",
             get(get_project).put(update_project).delete(delete_project),
         )
         
         // Tasks
         .route(
-            "/workspaces/:workspace_id/projects/:project_id/tasks",
+            "/workspaces/{workspace_id}/projects/{project_id}/tasks",
             post(add_task).get(list_tasks),
         )
         .route(
-            "/workspaces/:workspace_id/tasks/:task_id",
+            "/workspaces/{workspace_id}/tasks/{task_id}",
             get(get_task).put(update_task).delete(delete_task),
         )
         
         // Task Comments
         .route(
-            "/workspaces/:workspace_id/tasks/:task_id/comments",
+            "/workspaces/{workspace_id}/tasks/{task_id}/comments",
             post(add_task_comment).get(get_task_comments),
         )
         .route(
-            "/workspaces/:workspace_id/comments/:comment_id",
+            "/workspaces/{workspace_id}/comments/{comment_id}",
             delete(delete_comment),
         )
         
         // Workspace Dashboard Summary
         .route(
-            "/workspaces/:workspace_id/dashboard",
+            "/workspaces/{workspace_id}/dashboard",
             get(get_workspace_dashboard),
         )
         // Apply JWT authentication middleware across all protected routes

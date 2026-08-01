@@ -11,7 +11,8 @@ use std::net::SocketAddr;
 #[tokio::main]
 async fn main() {
     let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/my_db".to_string());
+        .unwrap_or_else(|_| "postgres://postgres:oceanvale@localhost:5432/stratum_db".to_string());
+
 
     let pool = sqlx::PgPool::connect(&database_url)
         .await

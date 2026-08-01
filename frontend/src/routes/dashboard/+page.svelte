@@ -4,12 +4,34 @@
   import Pop from "$lib/Pop.svelte";
   import { API } from "$lib/api";
 
-  type Project = {
-    id: number;
-    title: string;
+  type ClientSummary = {
+    id: string;
+    name: string;
+    company: string | null;
+    total_projects: number;
+    total_tasks: number;
   };
 
+  type DashboardStats = {
+    total_clients: number;
+    total_projects: number;
+    total_tasks: number;
+    pending_tasks: number;
+    completed_tasks: number;
+    clients: ClientSummary[];
+  };
+
+  type Project = {
+    id: string;
+    name: string;
+    client_id?: string;
+  };
+
+  // State Management
+  let dashboardStats = $state<DashboardStats | null>(null);
   let projects = $state<Project[]>([]);
+  let workspaceId = $state<string>("");
+
   let show = $state(false);
   let selectedProject = $state<Project | null>(null);
   let showDeleteModal = $state(false);
@@ -23,7 +45,7 @@
 
   function openUpdateModal(project: Project) {
     selectedProject = project;
-    updateTitle = project.title;
+    updateTitle = project.name;
     showUpdateModal = true;
   }
 
@@ -36,13 +58,52 @@
     return { "Authorization": `Bearer ${token}` };
   }
 
+  function getWorkspaceId(): string | null {
+    // Dynamically retrieve current workspace ID from localStorage or URL parameter
+    const storedWsId = localStorage.getItem("current_workspace_id");
+    if (storedWsId) return storedWsId;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("workspace_id");
+  }
+
+  // API Call: Fetch Workspace Dashboard Stats
+  async function loadDashboard() {
+    const auth = getAuthHeader();
+    const wsId = getWorkspaceId();
+    if (!auth || !wsId) return;
+
+    workspaceId = wsId;
+
+    try {
+      // 1. Load Dashboard Aggregated Stats
+      const dashRes = await fetch(`${API}/workspaces/${workspaceId}/dashboard`, {
+        method: "GET",
+        headers: auth
+      });
+      if (!dashRes.ok) throw new Error("Dashboard fetch failed");
+      dashboardStats = await dashRes.json();
+
+      // 2. Load Active Workspace Projects
+      const projectsRes = await fetch(`${API}/workspaces/${workspaceId}/projects`, {
+        method: "GET",
+        headers: auth
+      });
+      if (!projectsRes.ok) throw new Error("Projects fetch failed");
+      projects = await projectsRes.json();
+    } catch (err) {
+      console.error("Failed to load dashboard data:", err);
+    }
+  }
+
+  // API Call: Delete Project
   async function deleteProject() {
-    if (!selectedProject) return;
+    if (!selectedProject || !workspaceId) return;
     const auth = getAuthHeader();
     if (!auth) return;
 
     try {
-      const res = await fetch(`${API}/projects/${selectedProject.id}`, {
+      const res = await fetch(`${API}/workspaces/${workspaceId}/projects/${selectedProject.id}`, {
         method: "DELETE",
         headers: auth
       });
@@ -51,66 +112,47 @@
       projects = projects.filter(p => p.id !== selectedProject?.id);
       showDeleteModal = false;
       selectedProject = null;
+      loadDashboard(); // Refresh aggregated metrics
     } catch (err) {
       console.error(err);
     }
   }
 
+  // API Call: Update Project
   async function updateProject() {
-    if (!selectedProject) return;
+    if (!selectedProject || !workspaceId) return;
     const auth = getAuthHeader();
     if (!auth) return;
 
     try {
-      const response = await fetch(`${API}/projects/${selectedProject.id}`, {
+      const response = await fetch(`${API}/workspaces/${workspaceId}/projects/${selectedProject.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           ...auth
         },
-        body: JSON.stringify({ title: updateTitle })
+        body: JSON.stringify({ name: updateTitle })
       });
       if (!response.ok) throw new Error("Update failed");
 
       projects = projects.map(p =>
-        p.id === selectedProject?.id ? { ...p, title: updateTitle } : p
+        p.id === selectedProject?.id ? { ...p, name: updateTitle } : p
       );
       showUpdateModal = false;
       selectedProject = null;
+      loadDashboard();
     } catch (err) {
       console.error(err);
     }
   }
 
-  async function getProjects() {
+  // API Call: Create Project
+  async function create(event: CustomEvent<{ name: string; client_id?: string }>) {
     const auth = getAuthHeader();
-    if (!auth) return;
+    if (!auth || !workspaceId) return;
 
     try {
-      const response = await fetch(`${API}/projects`, {
-        method: "GET",
-        headers: auth
-      });
-      if (!response.ok) throw new Error("Fetch failed");
-      projects = await response.json();
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  onMount(() => {
-    getProjects();
-  });
-
-  const open = () => (show = true);
-  const close = () => (show = false);
-
-  async function create(event: CustomEvent<{ title: string }>) {
-    const auth = getAuthHeader();
-    if (!auth) return;
-
-    try {
-      const response = await fetch(`${API}/project`, {
+      const response = await fetch(`${API}/workspaces/${workspaceId}/projects`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -120,17 +162,23 @@
       });
       if (!response.ok) throw new Error("Creation failed");
 
-      const p = await response.json();
-      projects = [p, ...projects];
+      await loadDashboard(); // Re-fetch to synchronize state
       show = false;
     } catch (err) {
       console.error(err);
     }
   }
+
+  onMount(() => {
+    loadDashboard();
+  });
+
+  const open = () => (show = true);
+  const close = () => (show = false);
 </script>
 
 <svelte:head>
-  <title>Projects — Stratum</title>
+  <title>Dashboard — Stratum</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="true" />
   <link
@@ -146,9 +194,6 @@
   .font-mono {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
   }
-  .noise {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
   .scanlines {
     background: repeating-linear-gradient(
       to bottom,
@@ -158,74 +203,103 @@
       transparent 3px
     );
   }
-
-  @media (prefers-reduced-motion: reduce) {
-    * {
-      animation-duration: 0.001ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.001ms !important;
-    }
-  }
 </style>
 
 <div class="font-display relative min-h-screen overflow-hidden bg-[#08090b] text-[#eef2f6] antialiased selection:bg-[#3fa9f5] selection:text-white">
 
-  <!-- Scanlines + grain -->
+  <!-- Scanlines background effect -->
   <div class="scanlines pointer-events-none fixed inset-0 z-40 opacity-50 mix-blend-overlay"></div>
-  <div class="noise pointer-events-none fixed inset-0 z-40 opacity-[0.035] mix-blend-overlay"></div>
 
   <!-- Ambient gradient field -->
   <div class="pointer-events-none fixed inset-0">
     <div class="absolute left-1/2 top-[-14%] h-[760px] w-[1200px] -translate-x-1/2 rounded-full bg-[#3fa9f5] opacity-[0.14] blur-[190px]"></div>
-    <div class="absolute bottom-[6%] right-[-8%] h-[420px] w-[420px] rounded-full bg-[#ff3366] opacity-[0.08] blur-[150px]"></div>
-    <div class="absolute left-[-8%] top-[55%] h-[380px] w-[380px] rounded-full bg-[#3fa9f5] opacity-[0.07] blur-[140px]"></div>
   </div>
 
-  <!-- Top bar, echoes the landing page navbar -->
+  <!-- Top bar -->
   <nav class="sticky top-0 z-30 border-b border-white/[0.09] bg-[#08090b]/55 backdrop-blur-xl">
     <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-[18px]">
       <div class="flex items-center gap-2.5">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5db9f7" stroke-width="1.8"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-        <span class="text-[15px] font-semibold tracking-tight">Stratum</span>
+        <span class="text-[15px] font-semibold tracking-tight">Stratum Dashboard</span>
       </div>
 
       <button
-        class="rounded-full bg-gradient-to-b from-[#4fb3f7] to-[#1c6ba3] px-5 py-2.5 text-sm font-medium text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_18px_-4px_rgba(63,169,245,0.6)] transition hover:shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_6px_26px_-4px_rgba(63,169,245,1)]"
+        class="rounded-full bg-gradient-to-b from-[#4fb3f7] to-[#1c6ba3] px-5 py-2.5 text-sm font-medium text-white shadow-[0_4px_18px_-4px_rgba(63,169,245,0.6)] transition hover:shadow-[0_6px_26px_-4px_rgba(63,169,245,1)]"
         onclick={open}>
         + New Project
       </button>
     </div>
   </nav>
 
-  <div class="relative z-10 mx-auto max-w-6xl px-6 py-14">
-
+  <div class="relative z-10 mx-auto max-w-6xl px-6 py-10">
     <p class="font-mono text-[11px] uppercase tracking-[0.25em] text-[#5db9f7]">
-      Workspace
+      Workspace Overview
     </p>
-    <h1 class="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Projects</h1>
+    <h1 class="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Dashboard</h1>
 
-    <div class="mt-10">
+    <!-- 1. DASHBOARD METRICS AGGREGATION CARDS -->
+    {#if dashboardStats}
+      <div class="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div class="rounded-2xl border border-white/[0.09] bg-white/[0.02] p-5">
+          <p class="font-mono text-xs uppercase text-white/50">Total Clients</p>
+          <p class="mt-2 text-2xl font-bold text-white">{dashboardStats.total_clients}</p>
+        </div>
+        <div class="rounded-2xl border border-white/[0.09] bg-white/[0.02] p-5">
+          <p class="font-mono text-xs uppercase text-white/50">Total Projects</p>
+          <p class="mt-2 text-2xl font-bold text-white">{dashboardStats.total_projects}</p>
+        </div>
+        <div class="rounded-2xl border border-white/[0.09] bg-white/[0.02] p-5">
+          <p class="font-mono text-xs uppercase text-white/50">Pending Tasks</p>
+          <p class="mt-2 text-2xl font-bold text-[#f7ad3d]">{dashboardStats.pending_tasks}</p>
+        </div>
+        <div class="rounded-2xl border border-white/[0.09] bg-white/[0.02] p-5">
+          <p class="font-mono text-xs uppercase text-white/50">Completed Tasks</p>
+          <p class="mt-2 text-2xl font-bold text-[#42d6a4]">{dashboardStats.completed_tasks}</p>
+        </div>
+      </div>
+    {/if}
+
+    <!-- 2. CLIENTS & SUMMARY BREAKDOWN TABLE -->
+    {#if dashboardStats && dashboardStats.clients.length > 0}
+      <div class="mt-10">
+        <h2 class="text-xl font-semibold mb-4 text-white">Client Summaries</h2>
+        <div class="overflow-x-auto rounded-2xl border border-white/[0.09] bg-white/[0.02]">
+          <table class="w-full text-left text-sm text-white/80">
+            <thead class="border-b border-white/[0.09] font-mono text-xs uppercase text-white/40">
+              <tr>
+                <th class="px-6 py-4">Client Name</th>
+                <th class="px-6 py-4">Company</th>
+                <th class="px-6 py-4">Projects</th>
+                <th class="px-6 py-4">Tasks</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/[0.05]">
+              {#each dashboardStats.clients as client}
+                <tr class="hover:bg-white/[0.02]">
+                  <td class="px-6 py-4 font-medium text-white">{client.name}</td>
+                  <td class="px-6 py-4 text-white/50">{client.company ?? "—"}</td>
+                  <td class="px-6 py-4">{client.total_projects}</td>
+                  <td class="px-6 py-4">{client.total_tasks}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {/if}
+
+    <!-- 3. ACTIVE PROJECTS GRID -->
+    <div class="mt-12">
+      <h2 class="text-xl font-semibold text-white mb-6">Active Projects</h2>
       {#if projects.length === 0}
-        <div class="flex flex-col items-center justify-center rounded-2xl border border-white/[0.09] bg-white/[0.02] py-20 text-center">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-[#5db9f7] mb-4">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-          </div>
+        <div class="flex flex-col items-center justify-center rounded-2xl border border-white/[0.09] bg-white/[0.02] py-16 text-center">
           <p class="text-sm text-white/40">No projects found. Create one to get started!</p>
         </div>
       {:else}
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
           {#each projects as p}
             <div class="group relative overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.02] p-6 transition hover:border-[#3fa9f5]/40 flex flex-col justify-between">
-              <div class="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#3fa9f5] opacity-0 blur-3xl transition group-hover:opacity-20"></div>
-
-              <div class="flex items-start justify-between mb-6">
-                <div class="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-[#5db9f7]">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                </div>
-              </div>
-
-              <div class="font-medium text-white truncate mb-6">{p.title}</div>
-
+              <div class="font-medium text-white truncate mb-6">{p.name}</div>
               <div class="flex gap-2 justify-end">
                 <button
                   class="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-white/70 transition hover:border-white/25 hover:text-white"
@@ -250,19 +324,20 @@
   </div>
 </div>
 
+<!-- DELETE MODAL -->
 {#if showDeleteModal}
   <Pop bind:open={showDeleteModal}>
     <div class="font-display rounded-2xl border border-white/[0.10] bg-[#0e1116] p-6">
       <h2 class="text-xl font-semibold text-white mb-2">Delete project?</h2>
-      <p class="text-sm text-white/50 mb-6">This action cannot be undone. This will permanently remove the project parameters.</p>
+      <p class="text-sm text-white/50 mb-6">This action cannot be undone.</p>
       <div class="flex justify-end gap-2">
         <button
-          class="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white/70 transition hover:border-white/25 hover:text-white"
+          class="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white/70"
           onclick={() => showDeleteModal = false}>
           Cancel
         </button>
         <button
-          class="rounded-full bg-gradient-to-b from-[#ff5c7c] to-[#c21f45] px-4 py-2 text-sm font-medium text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_24px_-6px_rgba(255,51,102,0.6)] transition hover:shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_10px_30px_-6px_rgba(255,51,102,0.9)]"
+          class="rounded-full bg-gradient-to-b from-[#ff5c7c] to-[#c21f45] px-4 py-2 text-sm font-medium text-white"
           onclick={deleteProject}>
           Confirm delete
         </button>
@@ -271,30 +346,31 @@
   </Pop>
 {/if}
 
+<!-- UPDATE MODAL -->
 {#if showUpdateModal}
   <Pop bind:open={showUpdateModal}>
     <div class="font-display rounded-2xl border border-white/[0.10] bg-[#0e1116] p-6">
       <h2 class="text-xl font-semibold text-white mb-5">Update project</h2>
       <div class="mb-6">
         <label class="block text-[11px] font-mono uppercase tracking-[0.1em] text-white/50 mb-2" for="update-title">
-          Project title
+          Project Name
         </label>
         <input
           id="update-title"
-          class="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/[0.03] text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-[#3fa9f5]/60 focus:border-transparent transition-all"
+          class="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/[0.03] text-white"
           bind:value={updateTitle}
           type="text"
-          placeholder="Enter new title"
+          placeholder="Enter new project name"
         />
       </div>
       <div class="flex justify-end gap-2">
         <button
-          class="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white/70 transition hover:border-white/25 hover:text-white"
+          class="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white/70"
           onclick={() => showUpdateModal = false}>
           Cancel
         </button>
         <button
-          class="rounded-full bg-gradient-to-b from-[#4fb3f7] to-[#1c6ba3] px-4 py-2 text-sm font-medium text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_24px_-6px_rgba(63,169,245,0.6)] transition hover:shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_10px_30px_-6px_rgba(63,169,245,1)]"
+          class="rounded-full bg-gradient-to-b from-[#4fb3f7] to-[#1c6ba3] px-4 py-2 text-sm font-medium text-white"
           onclick={updateProject}>
           Save changes
         </button>
