@@ -1,36 +1,38 @@
 <script lang="ts">
-	import { API } from "$lib/api";
+	import { API } from '$lib/api';
 
-	let email = $state("");
-	let password = $state("");
+	console.log('API URL:', API);
+	let email = $state('');
+	let password = $state('');
 
 	async function register(event: SubmitEvent) {
 		// Prevent the default browser page reload on form submission
 		event.preventDefault();
 
 		try {
-			const response = await fetch(`${API}/register`, {
-				method: "POST",
+			const response = await fetch(`${API}/auth/register`, {
+				method: 'POST',
 				headers: {
-					"Content-Type": "application/json"
+					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
+					name: email.split('@')[0] || 'User',
 					email,
-					password,
+					password
 				})
 			});
 
 			if (!response.ok) {
-				throw new Error("Registration failed");
+				throw new Error('Registration failed');
 			}
 
 			const resp = await response.json();
 			console.log(resp);
 
 			// Redirect to login page on success
-			window.location.href = "/login";
+			window.location.href = '/login';
 		} catch (error) {
-			console.error("Error during registration:", error);
+			console.error('Error during registration:', error);
 			// Handle error UI here if needed
 		}
 	}
@@ -39,12 +41,126 @@
 <svelte:head>
 	<title>Sign up — Stratum</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="true" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	<link
 		href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
 		rel="stylesheet"
 	/>
 </svelte:head>
+
+<div
+	class="font-display relative flex min-h-screen items-center justify-center overflow-hidden bg-[#08090b] px-4 text-[#eef2f6] antialiased selection:bg-[#3fa9f5] selection:text-white"
+>
+	<!-- Scanlines + grain -->
+	<div class="scanlines pointer-events-none fixed inset-0 z-40 opacity-50 mix-blend-overlay"></div>
+	<div class="noise pointer-events-none fixed inset-0 z-40 opacity-[0.035] mix-blend-overlay"></div>
+
+	<!-- Ambient gradient field -->
+	<div class="pointer-events-none fixed inset-0">
+		<div
+			class="absolute top-[-14%] left-1/2 h-[760px] w-[1200px] -translate-x-1/2 rounded-full bg-[#3fa9f5] opacity-[0.14] blur-[190px]"
+		></div>
+		<div
+			class="absolute right-[-8%] bottom-[6%] h-[420px] w-[420px] rounded-full bg-[#ff3366] opacity-[0.08] blur-[150px]"
+		></div>
+		<div
+			class="absolute top-[55%] left-[-8%] h-[380px] w-[380px] rounded-full bg-[#3fa9f5] opacity-[0.07] blur-[140px]"
+		></div>
+	</div>
+
+	<!-- Brand mark, top-left, echoes the landing page navbar -->
+	<a href="/" class="absolute top-6 left-6 z-10 flex items-center gap-2.5">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5db9f7" stroke-width="1.8"
+			><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline
+				points="2 12 12 17 22 12"
+			/></svg
+		>
+		<span class="text-[15px] font-semibold tracking-tight">Stratum</span>
+	</a>
+
+	<!-- Signature "linked work" style window, now framing the form -->
+	<div class="relative z-10 w-full max-w-md" style="perspective: 1400px;">
+		<div
+			class="pointer-events-none absolute -inset-x-8 -inset-y-6 rounded-[32px] bg-[#3fa9f5] opacity-[0.16] blur-[80px]"
+		></div>
+
+		<div
+			class="relative overflow-hidden rounded-2xl border border-white/[0.10] bg-gradient-to-b from-white/[0.05] to-white/[0.01] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl"
+		>
+			<!-- window chrome, matches the hero demo window -->
+			<div class="flex items-center gap-1.5 border-b border-white/[0.09] px-5 py-3.5">
+				<span class="h-2.5 w-2.5 rounded-full bg-white/15"></span>
+				<span class="h-2.5 w-2.5 rounded-full bg-white/15"></span>
+				<span class="h-2.5 w-2.5 rounded-full bg-white/15"></span>
+				<span class="ml-3 font-mono text-[11px] text-white/30">stratum/register</span>
+			</div>
+
+			<div class="px-8 py-9">
+				<div class="mb-8 text-center">
+					<p class="font-mono text-[11px] tracking-[0.25em] text-[#5db9f7] uppercase">
+						Get started
+					</p>
+					<h2 class="mt-4 text-3xl font-semibold tracking-tight text-white">Sign up</h2>
+					<p class="mt-2 text-sm text-white/50">Join the first engineering teams using Stratum.</p>
+				</div>
+
+				<form onsubmit={register} class="space-y-5">
+					<div>
+						<label
+							for="email"
+							class="mb-2 block font-mono text-[11px] tracking-[0.1em] text-white/50 uppercase"
+							>Email address</label
+						>
+						<input
+							id="email"
+							type="email"
+							placeholder="you@example.com"
+							bind:value={email}
+							required
+							class="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white transition-all placeholder:text-white/25 focus:border-transparent focus:ring-2 focus:ring-[#3fa9f5]/60 focus:outline-none"
+						/>
+					</div>
+
+					<div>
+						<label
+							for="password"
+							class="mb-2 block font-mono text-[11px] tracking-[0.1em] text-white/50 uppercase"
+							>Password</label
+						>
+						<input
+							id="password"
+							type="password"
+							placeholder="••••••••"
+							bind:value={password}
+							required
+							class="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white transition-all placeholder:text-white/25 focus:border-transparent focus:ring-2 focus:ring-[#3fa9f5]/60 focus:outline-none"
+						/>
+					</div>
+
+					<button
+						type="submit"
+						class="mt-2 w-full rounded-full bg-gradient-to-b from-[#4fb3f7] to-[#1c6ba3] px-4 py-3.5 text-sm font-medium text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_30px_-6px_rgba(63,169,245,0.7)] transition hover:shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_10px_40px_-6px_rgba(63,169,245,1)]"
+					>
+						Get started
+					</button>
+				</form>
+
+				<p class="mt-6 text-center text-sm text-white/50">
+					Already have an account?
+					<a href="/login" class="font-medium text-[#5db9f7] transition hover:text-white">Log in</a>
+				</p>
+			</div>
+
+			<div class="flex items-center justify-center gap-2 border-t border-white/[0.09] px-5 py-3">
+				<span class="h-1 w-1 rounded-full bg-[#5db9f7]"></span>
+				<span class="font-mono text-[10px] tracking-[0.14em] text-white/30 uppercase"
+					>Everything linked, automatically</span
+				>
+				<span class="h-1 w-1 rounded-full bg-[#5db9f7]"></span>
+			</div>
+		</div>
+	</div>
+</div>
 
 <style>
 	.font-display {
@@ -74,98 +190,3 @@
 		}
 	}
 </style>
-
-<div class="font-display relative min-h-screen overflow-hidden bg-[#08090b] text-[#eef2f6] antialiased selection:bg-[#3fa9f5] selection:text-white flex items-center justify-center px-4">
-
-	<!-- Scanlines + grain -->
-	<div class="scanlines pointer-events-none fixed inset-0 z-40 opacity-50 mix-blend-overlay"></div>
-	<div class="noise pointer-events-none fixed inset-0 z-40 opacity-[0.035] mix-blend-overlay"></div>
-
-	<!-- Ambient gradient field -->
-	<div class="pointer-events-none fixed inset-0">
-		<div class="absolute left-1/2 top-[-14%] h-[760px] w-[1200px] -translate-x-1/2 rounded-full bg-[#3fa9f5] opacity-[0.14] blur-[190px]"></div>
-		<div class="absolute bottom-[6%] right-[-8%] h-[420px] w-[420px] rounded-full bg-[#ff3366] opacity-[0.08] blur-[150px]"></div>
-		<div class="absolute left-[-8%] top-[55%] h-[380px] w-[380px] rounded-full bg-[#3fa9f5] opacity-[0.07] blur-[140px]"></div>
-	</div>
-
-	<!-- Brand mark, top-left, echoes the landing page navbar -->
-	<a href="/" class="absolute left-6 top-6 z-10 flex items-center gap-2.5">
-		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5db9f7" stroke-width="1.8"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-		<span class="text-[15px] font-semibold tracking-tight">Stratum</span>
-	</a>
-
-	<!-- Signature "linked work" style window, now framing the form -->
-	<div class="relative z-10 w-full max-w-md" style="perspective: 1400px;">
-
-		<div class="pointer-events-none absolute -inset-x-8 -inset-y-6 rounded-[32px] bg-[#3fa9f5] opacity-[0.16] blur-[80px]"></div>
-
-		<div
-			class="relative rounded-2xl border border-white/[0.10] bg-gradient-to-b from-white/[0.05] to-white/[0.01] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl overflow-hidden">
-
-			<!-- window chrome, matches the hero demo window -->
-			<div class="flex items-center gap-1.5 border-b border-white/[0.09] px-5 py-3.5">
-				<span class="h-2.5 w-2.5 rounded-full bg-white/15"></span>
-				<span class="h-2.5 w-2.5 rounded-full bg-white/15"></span>
-				<span class="h-2.5 w-2.5 rounded-full bg-white/15"></span>
-				<span class="font-mono ml-3 text-[11px] text-white/30">stratum/register</span>
-			</div>
-
-			<div class="px-8 py-9">
-
-				<div class="text-center mb-8">
-					<p class="font-mono text-[11px] uppercase tracking-[0.25em] text-[#5db9f7]">
-						Get started
-					</p>
-					<h2 class="mt-4 text-3xl font-semibold tracking-tight text-white">Sign up</h2>
-					<p class="mt-2 text-sm text-white/50">Join the first engineering teams using Stratum.</p>
-				</div>
-
-				<form onsubmit={register} class="space-y-5">
-					<div>
-						<label for="email" class="block text-[11px] font-mono uppercase tracking-[0.1em] text-white/50 mb-2">Email address</label>
-						<input
-							id="email"
-							type="email"
-							placeholder="you@example.com"
-							bind:value={email}
-							required
-							class="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/[0.03] text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-[#3fa9f5]/60 focus:border-transparent transition-all"
-						/>
-					</div>
-
-					<div>
-						<label for="password" class="block text-[11px] font-mono uppercase tracking-[0.1em] text-white/50 mb-2">Password</label>
-						<input
-							id="password"
-							type="password"
-							placeholder="••••••••"
-							bind:value={password}
-							required
-							class="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/[0.03] text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-[#3fa9f5]/60 focus:border-transparent transition-all"
-						/>
-					</div>
-
-					<button
-						type="submit"
-						class="w-full rounded-full bg-gradient-to-b from-[#4fb3f7] to-[#1c6ba3] px-4 py-3.5 text-sm font-medium text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_8px_30px_-6px_rgba(63,169,245,0.7)] transition hover:shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_10px_40px_-6px_rgba(63,169,245,1)] mt-2">
-						Get started
-					</button>
-				</form>
-
-				<p class="text-center text-sm text-white/50 mt-6">
-					Already have an account?
-					<a href="/login" class="text-[#5db9f7] hover:text-white transition font-medium">Log in</a>
-				</p>
-
-			</div>
-
-			<div class="flex items-center justify-center gap-2 border-t border-white/[0.09] px-5 py-3">
-				<span class="h-1 w-1 rounded-full bg-[#5db9f7]"></span>
-				<span class="font-mono text-[10px] uppercase tracking-[0.14em] text-white/30">Everything linked, automatically</span>
-				<span class="h-1 w-1 rounded-full bg-[#5db9f7]"></span>
-			</div>
-
-		</div>
-	</div>
-
-</div>

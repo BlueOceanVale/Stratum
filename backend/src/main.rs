@@ -10,6 +10,8 @@ use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().ok();
+
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:oceanvale@localhost:5432/stratum_db".to_string());
 

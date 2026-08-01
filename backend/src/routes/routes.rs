@@ -3,6 +3,7 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+use tower_http::cors::{Any, CorsLayer};
 
 use crate::{
     handlers::{
@@ -102,8 +103,13 @@ pub fn create_router(state: AppState) -> Router {
         // Apply JWT authentication middleware across all protected routes
         .layer(middleware::from_fn(auth));
 
-    // Combine public and protected routes under the `/api` prefix
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
     Router::new()
         .nest("/api", public_routes.merge(protected_routes))
+        .layer(cors)
         .with_state(state)
 }

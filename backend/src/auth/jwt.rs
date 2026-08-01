@@ -3,10 +3,17 @@ use chrono::{Utc, Duration};
 use jsonwebtoken::{Algorithm, Validation, decode, encode, Header, DecodingKey, EncodingKey, errors::Error};
 use crate::models::models::User;
 
+fn jwt_secret() -> String {
+    let env_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(".env");
+    let _ = dotenvy::from_path(&env_path);
+    dotenvy::var("JWT_SECRET")
+        .unwrap_or_else(|_| "dev-jwt-secret-change-me".to_string())
+}
+
 pub fn create_token(user: &User) -> Result<String, Error> {
     let now = Utc::now();
     let expiration = now + Duration::hours(1);
-    let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let secret = jwt_secret();
 
     let claims = Claims {
         sub: user.id,
@@ -23,7 +30,7 @@ pub fn create_token(user: &User) -> Result<String, Error> {
 
 pub fn verify_token(token: &str) -> Result<Claims, Error> {
     let validation = Validation::new(Algorithm::HS256);
-    let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let secret = jwt_secret();
     let decoding_key = DecodingKey::from_secret(secret.as_bytes());
 
     let token_data = decode::<Claims>(token, &decoding_key, &validation)?;
