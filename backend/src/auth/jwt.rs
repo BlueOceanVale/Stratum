@@ -37,3 +37,25 @@ pub fn verify_token(token: &str) -> Result<Claims, Error> {
     
     Ok(token_data.claims)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uuid::Uuid;
+
+    #[test]
+    fn creates_and_verifies_jwt() {
+        let user = User {
+            id: Uuid::new_v4(),
+            name: "Test User".to_string(),
+            email: "test@example.com".to_string(),
+            password_hash: "hash".to_string(),
+        };
+
+        let token = create_token(&user).expect("token creation should work");
+        let claims = verify_token(&token).expect("token verification should work");
+
+        assert_eq!(claims.email, user.email);
+        assert_eq!(claims.sub, user.id);
+    }
+}

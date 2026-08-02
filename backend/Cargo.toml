@@ -8,7 +8,7 @@ argon2 = "0.5.3"
 axum = { version = "0.8", features = ["macros"] }
 chrono = { version = "0.4.45", features = ["serde"] }
 dotenvy = "0.15.7"
-jsonwebtoken = "10.4.0"
+jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }
 serde = "1.0.228"
 sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono"] }
 tokio = { version = "1", features = ["full"] }
