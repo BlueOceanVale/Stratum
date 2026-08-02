@@ -2,6 +2,9 @@
 frontend/build/** linguist-generated
 frontend/.svelte-kit/** linguist-generated
 frontend/dist/** linguist-generated
+frontend/.vite/** linguist-generated
+frontend/.turbo/** linguist-generated
+frontend/.cache/** linguist-generated
 
 # Frontend dependencies
 frontend/node_modules/** linguist-vendored
@@ -9,6 +12,13 @@ frontend/node_modules/** linguist-vendored
 # Generated files
 frontend/*.min.js linguist-generated
 frontend/*.generated.ts linguist-generated
+frontend/**/*.generated.* linguist-generated
+frontend/**/*.d.ts linguist-generated
+frontend/**/*.css linguist-generated
+frontend/**/*.map linguist-generated
+frontend/**/*.js linguist-generated
+frontend/**/*.js.map linguist-generated
+frontend/**/*.css.map linguist-generated
 
 # Lock files
 frontend/package-lock.json linguist-generated
