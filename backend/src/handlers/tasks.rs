@@ -1,10 +1,10 @@
-use axum::{extract::{Extension, Path, State}, http::StatusCode, Json};
+use axum::{extract::{Extension, Path, State, Query}, http::StatusCode, Json};
 use serde::Deserialize;
 use sqlx;
 use uuid::Uuid;
 
 use crate::{models::models::Task, state::AppState};
-use crate::models::models::{Claims, ErrorResponse, SuccessResponse, UpdateTaskRequest};
+use crate::models::models::{Claims, ErrorResponse, SuccessResponse, UpdateTaskRequest, TaskQuery};
 
 #[derive(Deserialize)]
 pub struct CreateTaskRequest {
@@ -101,19 +101,36 @@ pub async fn list_tasks(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((workspace_id, project_id)): Path<(Uuid, Uuid)>,
+    Query(query): Query<TaskQuery>,
 ) -> Result<(StatusCode, Json<Vec<Task>>), (StatusCode, Json<ErrorResponse>)> {
     let owner_id = claims.sub;
 
-    let result = sqlx::query_as::<_, Task>(
-        "SELECT id, project_id, workspace_id, title, description, status, priority
-         FROM tasks
-         WHERE project_id = $1 AND workspace_id = $2 AND owner_id = $3"
-    )
-    .bind(project_id)
-    .bind(workspace_id)
-    .bind(owner_id)
-    .fetch_all(&state.pool)
-    .await;
+    let result = if let Some(search) = query.search {    
+        let pattern = format!("%{}%", search);
+
+        sqlx::query_as::<_, Task>(
+            "SELECT id, project_id, workspace_id, title, description, status, priority
+            FROM tasks
+            WHERE project_id = $1 AND workspace_id = $2 AND owner_id = $3 AND (title ILIKE $4 OR description ILIKE $4)" 
+        )
+        .bind(project_id)
+        .bind(workspace_id)
+        .bind(owner_id)
+        .bind(pattern)
+        .fetch_all(&state.pool)
+        .await
+    } else {
+        sqlx::query_as::<_, Task>(
+            "SELECT id, project_id, workspace_id, title, description, status, priority
+            FROM tasks
+            WHERE project_id = $1 AND workspace_id = $2 AND owner_id = $3"
+        )
+        .bind(project_id)
+        .bind(workspace_id)
+        .bind(owner_id)
+        .fetch_all(&state.pool)
+        .await
+    };
 
     match result {
         Ok(tasks) => Ok((StatusCode::OK, Json(tasks))),
