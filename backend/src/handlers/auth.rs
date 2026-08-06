@@ -1,5 +1,6 @@
 use axum::{Json, extract::State, http::StatusCode};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use crate::state::AppState;
 use crate::auth::jwt::create_token;
 use argon2::{
@@ -26,7 +27,6 @@ fn hash_password(password: &str) -> Result<String, Error> {
     Ok(hash.to_string())
 }
 
-
 fn verify_password(password: &str, hash: &str) -> bool { 
     let parsed_hash = match PasswordHash::new(hash) {
         Ok(hash) => hash,
@@ -41,35 +41,64 @@ fn verify_password(password: &str, hash: &str) -> bool {
 pub async fn register(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
-) -> (StatusCode, Json<MessageResponse>) {
-    let hashed_password = hash_password(&payload.password);
-
-    let hashed_password = match hashed_password {
+) -> Result<(StatusCode, Json<LoginResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let hashed_password = match hash_password(&payload.password) {
         Ok(value) => value,
         Err(err) => {
             println!("{err}");
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(MessageResponse { message: "Failed to create user".to_string() }))
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse { error: "Failed to process password".to_string() }),
+            ));
         }
     };
 
-    let result = sqlx::query("
-        INSERT INTO users(name, email, password_hash)
-        VALUES($1, $2, $3)
-    ")
-        .bind(payload.name)
-        .bind(payload.email)
-        .bind(hashed_password)
-        .execute(&state.pool)
-        .await;
-
-    match result {
-        Ok(_) => (StatusCode::CREATED, Json(MessageResponse{ message: "User created!".to_string() })),
-        Err(_err) => {
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(MessageResponse{ message: "Failed to create user!".to_string() }))
+    // Insert user and return the auto-generated ID directly
+    let user_id = match sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO users (name, email, password_hash)
+         VALUES ($1, $2, $3)
+         RETURNING id"
+    )
+    .bind(&payload.name)
+    .bind(&payload.email)
+    .bind(&hashed_password)
+    .fetch_one(&state.pool)
+    .await {
+        Ok(id) => id,
+        Err(err) => {
+            println!("{err}");
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse { error: "User registration failed (email may already exist)".to_string() }),
+            ));
         }
-    }
-}
+    };
 
+    // Construct user model for token generation
+    let new_user = User {
+        id: user_id,
+        name: payload.name,
+        email: payload.email,
+        password_hash: hashed_password,
+    };
+
+    // Generate JWT token
+    let token = match create_token(&new_user) {
+        Ok(token) => token,
+        Err(_) => return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse { error: "Failed to create authentication token".to_string() }),
+        )),
+    };
+
+    Ok((
+        StatusCode::CREATED,
+        Json(LoginResponse {
+            access_token: token,
+            token_type: "Bearer".to_string(),
+        }),
+    ))
+}
 
 pub async fn login(
     State(state): State<AppState>,
