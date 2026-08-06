@@ -23,14 +23,19 @@
 			});
 
 			if (!response.ok) {
-				throw new Error('Registration failed');
+				const err = await response.json();
+				throw new Error(err.error ?? 'Registration failed');
 			}
 
 			const resp = await response.json();
 			console.log(resp);
-
-			// Redirect to login page on success
-			window.location.href = '/login';
+			const token = resp.access_token ?? resp.token;
+			if (token) {
+				localStorage.setItem('token', token);
+				window.location.href = '/workspaces';
+			} else {
+				throw new Error('Failed to register');
+			}
 		} catch (error) {
 			console.error('Error during registration:', error);
 			// Handle error UI here if needed
