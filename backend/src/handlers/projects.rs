@@ -1,10 +1,10 @@
-use axum::{extract::{Extension, Path, State}, http::StatusCode, Json};
+use axum::{Json, extract::{Extension, Path, Query, State}, http::StatusCode};
 use serde::Deserialize;
 use sqlx;
 use uuid::Uuid;
 
 use crate::{models::models::Project, state::AppState};
-use crate::models::models::{Claims, ErrorResponse, SuccessResponse, UpdateProjectRequest};
+use crate::models::models::{Claims, ErrorResponse, SuccessResponse, UpdateProjectRequest, ProjectQuery};
 
 #[derive(Deserialize)]
 pub struct CreateProjectRequest {
@@ -92,18 +92,37 @@ pub async fn list_projects(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(workspace_id): Path<Uuid>,
+    Query(query): Query<ProjectQuery>,
 ) -> Result<(StatusCode, Json<Vec<Project>>), (StatusCode, Json<ErrorResponse>)> {
+    
     let owner_id = claims.sub;
 
-    let result = sqlx::query_as::<_, Project>(
+    let result = if let Some(search) = query.search {
+        let pattern = format!("%{}%", search);
+
+        sqlx::query_as::<_, Project>(
         "SELECT id, workspace_id, title, description, tag
-         FROM projects
-         WHERE workspace_id = $1 AND owner_id = $2"
-    )
-    .bind(workspace_id)
-    .bind(owner_id)
-    .fetch_all(&state.pool)
-    .await;
+            FROM projects
+            WHERE workspace_id = $1 AND owner_id = $2 AND (title ILIKE $3 OR description ILIKE $4)"
+        )
+        .bind(workspace_id)
+        .bind(owner_id)
+        .bind(pattern)
+        .fetch_all(&state.pool)
+        .await
+    } else {
+
+        sqlx::query_as::<_, Project>(
+            "SELECT Id, workspace_id, title, description, tag
+                FROM projects
+                WHERE workspace_id = $1 AND owner_id =$2"
+        )
+        .bind(workspace_id)
+        .bind(owner_id)
+        .fetch_all(&state.pool)
+        .await 
+
+    };
 
     match result {
         Ok(projects) => Ok((StatusCode::OK, Json(projects))),
@@ -117,6 +136,7 @@ pub async fn list_projects(
             ))
         }
     }
+
 }
 
 

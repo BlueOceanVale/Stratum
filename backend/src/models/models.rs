@@ -3,6 +3,11 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 #[derive(Deserialize)]
+pub struct ProjectQuery {
+    pub search: Option<String>,
+}
+
+#[derive(Deserialize)]
 pub struct TaskQuery {
     pub search: Option<String>,
 }
