@@ -8,6 +8,11 @@ pub struct ProjectQuery {
 }
 
 #[derive(Deserialize)]
+pub struct ClientSearch {
+    pub search: Option<String>,
+}
+
+#[derive(Deserialize)]
 pub struct TaskQuery {
     pub search: Option<String>,
 }

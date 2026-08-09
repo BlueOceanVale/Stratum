@@ -1,5 +1,6 @@
+
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path, State, Query},
     http::StatusCode,
     Json,
 };
@@ -8,9 +9,8 @@ use uuid::Uuid;
 
 use crate::{
     models::models::{
-        Claims, Client, CreateClientRequest, ErrorResponse, SuccessResponse, UpdateClientRequest,
-    },
-    state::AppState,
+        Claims, Client, ClientSearch, CreateClientRequest, ErrorResponse, SuccessResponse, UpdateClientRequest,
+    }, state::AppState,
 };
 
 // 1. CREATE CLIENT
@@ -80,19 +80,39 @@ pub async fn list_clients(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(workspace_id): Path<Uuid>,
+    Query(query): Query<ClientSearch>,
 ) -> Result<(StatusCode, Json<Vec<Client>>), (StatusCode, Json<ErrorResponse>)> {
     let user_id = claims.sub;
 
-    let result = sqlx::query_as::<_, Client>(
+    let result = if let Some(search) = query.search {
+
+        let pattern = format!("%{}%", search);
+
+        sqlx::query_as::<_, Client>(
+        "SELECT c.id, c.workspace_id, c.name, c.email, c.company, c.status
+         FROM clients c
+         INNER JOIN workspace_members wm ON c.workspace_id = wm.workspace_id
+         WHERE c.workspace_id = $1 AND wm.user_id = $2 AND c.name ILIKE $3"
+        )
+        .bind(workspace_id)
+        .bind(user_id)
+        .bind(pattern)
+        .fetch_all(&state.pool)
+        .await
+    } else {
+
+        sqlx::query_as::<_, Client>(
         "SELECT c.id, c.workspace_id, c.name, c.email, c.company, c.status
          FROM clients c
          INNER JOIN workspace_members wm ON c.workspace_id = wm.workspace_id
          WHERE c.workspace_id = $1 AND wm.user_id = $2",
-    )
-    .bind(workspace_id)
-    .bind(user_id)
-    .fetch_all(&state.pool)
-    .await;
+        )
+        .bind(workspace_id)
+        .bind(user_id)
+        .fetch_all(&state.pool)
+        .await
+
+    };
 
     match result {
         Ok(clients) => Ok((StatusCode::OK, Json(clients))),
