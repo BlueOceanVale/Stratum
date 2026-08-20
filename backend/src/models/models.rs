@@ -37,9 +37,6 @@ pub struct User {
     pub password_hash: String
 }
 
-
-
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Claims {
     pub sub: Uuid,
